@@ -14,15 +14,15 @@ defmodule MockProvider.SendGridMock do
     :timer.sleep(150)
 
     params = conn.body_params || %{}
-    
+
     # Extract email details from SendGrid format
     personalizations = get_in(params, ["personalizations"]) || []
     from_email = get_in(params, ["from", "email"]) || ""
     subject = get_subject(personalizations)
-    
+
     # Generate mock message ID like SendGrid
     message_id = generate_message_id()
-    
+
     # SendGrid typically returns 202 with no body on success
     Logger.info("Mock SendGrid email sent: #{message_id} from #{from_email} subject: #{subject}")
 
@@ -70,7 +70,7 @@ defmodule MockProvider.SendGridMock do
       %{
         "sg_event_id" => "SG" <> (:crypto.strong_rand_bytes(8) |> Base.encode16(case: :lower)),
         "event" => "processed",
-        "email" => "test@example.com", 
+        "email" => "test@example.com",
         "timestamp" => System.system_time(:second) - 10,
         "smtp-id" => "<" <> generate_message_id() <> ">",
         "sg_message_id" => generate_message_id()

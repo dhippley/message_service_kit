@@ -1,7 +1,7 @@
 defmodule MockProvider.Application do
   @moduledoc """
   OTP Application for MockProvider.
-  
+
   Starts a simple HTTP server that mocks external messaging providers
   like Twilio (SMS/MMS) and SendGrid (Email).
   """

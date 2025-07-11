@@ -226,11 +226,11 @@ defmodule MessagingService.Providers.TwilioProvider do
 
   defp make_http_request(method, url, headers, body) do
     request = Finch.build(method, url, headers, body)
-    
+
     case Finch.request(request, MessagingService.Finch) do
       {:ok, %Finch.Response{status: status, body: body}} ->
         {:ok, %{status_code: status, body: body}}
-      
+
       {:error, reason} ->
         {:error, reason}
     end

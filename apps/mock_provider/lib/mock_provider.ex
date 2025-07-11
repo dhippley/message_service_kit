@@ -3,7 +3,7 @@ defmodule MockProvider do
   MockProvider simulates external messaging service APIs like Twilio and SendGrid.
 
   This application provides HTTP endpoints that mimic the behavior of:
-  - Twilio SMS/MMS API 
+  - Twilio SMS/MMS API
   - SendGrid Email API
 
   It runs on port 4001 by default and can be used to test messaging
@@ -14,7 +14,7 @@ defmodule MockProvider do
   ### Twilio-like SMS/MMS
   - `POST /v1/Accounts/{AccountSid}/Messages` - Send SMS/MMS
 
-  ### SendGrid-like Email  
+  ### SendGrid-like Email
   - `POST /v3/mail/send` - Send Email
 
   ### Health Check

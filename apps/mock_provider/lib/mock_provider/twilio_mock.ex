@@ -14,10 +14,10 @@ defmodule MockProvider.TwilioMock do
     :timer.sleep(100)
 
     params = conn.body_params || %{}
-    
+
     # Generate mock response like Twilio
     sid = "SM" <> generate_sid()
-    
+
     response = %{
       account_sid: conn.path_params["account_sid"] || "AC" <> generate_sid(),
       api_version: "2010-04-01",
@@ -59,7 +59,7 @@ defmodule MockProvider.TwilioMock do
 
     account_sid = conn.path_params["account_sid"]
     message_id = conn.path_params["message_id"]
-    
+
     response = %{
       account_sid: account_sid,
       api_version: "2010-04-01",

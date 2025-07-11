@@ -17,7 +17,7 @@ defmodule MockProvider.Router do
     MockProvider.TwilioMock.send_message(conn)
   end
 
-  # Twilio-like SMS endpoint with .json extension  
+  # Twilio-like SMS endpoint with .json extension
   post "/v1/Accounts/:account_sid/Messages.json" do
     MockProvider.TwilioMock.send_message(conn)
   end
@@ -27,7 +27,7 @@ defmodule MockProvider.Router do
     MockProvider.TwilioMock.get_message_status(conn)
   end
 
-  # SendGrid-like email endpoint  
+  # SendGrid-like email endpoint
   post "/v3/mail/send" do
     MockProvider.SendGridMock.send_email(conn)
   end
