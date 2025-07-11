@@ -235,6 +235,48 @@ Webhooks are secured with multiple authentication methods:
 
 ## Development
 
+### Code Quality Tools
+
+The project includes several code quality tools for maintaining high standards:
+
+```bash
+# Format code according to Elixir standards
+mix format
+
+# Check if code is properly formatted  
+mix format --check-formatted
+
+# Static code analysis with Credo
+mix credo
+mix credo --strict
+
+# Type analysis with Dialyzer (requires PLT)
+mix dialyzer
+
+# Run all quality checks at once
+mix quality
+
+# CI-friendly quality check (no auto-fixes)
+mix quality.ci
+```
+
+#### Setting up Dialyzer
+
+Dialyzer requires a PLT (Persistent Lookup Table) to be built:
+
+```bash
+# Build PLT (only needed once, or when deps change)
+mix dialyzer --plt
+```
+
+#### Credo Configuration
+
+Credo is configured via `.credo.exs` in the project root with:
+- Custom file inclusion patterns for umbrella projects
+- Relaxed line length limits (120 characters)
+- Module documentation requirements
+- Alias ordering enforcement
+
 ### Mock Provider Integration
 
 For development and testing, the service integrates with an external mock provider that simulates Twilio and SendGrid APIs:

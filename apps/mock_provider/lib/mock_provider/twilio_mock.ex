@@ -37,7 +37,8 @@ defmodule MockProvider.TwilioMock do
       sid: sid,
       status: "queued",
       subresource_uris: %{
-        media: "/2010-04-01/Accounts/#{conn.path_params["account_sid"]}/Messages/#{sid}/Media.json"
+        media:
+          "/2010-04-01/Accounts/#{conn.path_params["account_sid"]}/Messages/#{sid}/Media.json"
       },
       to: params["To"] || "",
       uri: "/2010-04-01/Accounts/#{conn.path_params["account_sid"]}/Messages/#{sid}.json"

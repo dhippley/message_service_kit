@@ -62,7 +62,8 @@ defmodule MessagingService.MixProject do
       {:jason, "~> 1.2"},
       {:dns_cluster, "~> 0.1.1"},
       {:bandit, "~> 1.5"},
-      {:dialyxir, "~> 1.4", only: [:dev], runtime: false}
+      {:dialyxir, "~> 1.4", only: [:dev], runtime: false},
+      {:credo, "~> 1.7", only: [:dev, :test], runtime: false}
     ]
   end
 
@@ -84,7 +85,9 @@ defmodule MessagingService.MixProject do
         "tailwind messaging_service --minify",
         "esbuild messaging_service --minify",
         "phx.digest"
-      ]
+      ],
+      quality: ["format", "credo --strict", "dialyzer"],
+      "quality.ci": ["format --check-formatted", "credo --strict", "dialyzer"]
     ]
   end
 end

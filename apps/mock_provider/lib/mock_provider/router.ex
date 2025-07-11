@@ -7,10 +7,10 @@ defmodule MockProvider.Router do
 
   require Logger
 
-  plug Plug.Logger
-  plug :match
-  plug Plug.Parsers, parsers: [:urlencoded, :json], json_decoder: Jason
-  plug :dispatch
+  plug(Plug.Logger)
+  plug(:match)
+  plug(Plug.Parsers, parsers: [:urlencoded, :json], json_decoder: Jason)
+  plug(:dispatch)
 
   # Twilio-like SMS endpoint
   post "/v1/Accounts/:account_sid/Messages" do
