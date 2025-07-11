@@ -28,16 +28,6 @@ defmodule MessagingServiceWeb.Router do
     post "/webhooks/messages", WebhookController, :receive_message
     post "/webhooks/messages/batch", WebhookController, :receive_batch
     get "/webhooks/health", WebhookController, :health_check
-
-    # Mock provider endpoints that simulate external services
-    post "/mock/twilio/sms", MockProviderController, :twilio_send_sms
-    post "/mock/sendgrid/email", MockProviderController, :sendgrid_send_email
-    post "/mock/generic/send", MockProviderController, :generic_send
-
-    # Status and management endpoints
-    get "/mock/:provider/status/:message_id", MockProviderController, :get_message_status
-    get "/mock/:provider/messages", MockProviderController, :get_all_messages
-    delete "/mock/:provider/messages", MockProviderController, :clear_messages
   end
 
   # Enable LiveDashboard and Swoosh mailbox preview in development

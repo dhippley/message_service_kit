@@ -47,4 +47,40 @@ defmodule MockProvider.SendGridMock do
   end
 
   defp get_subject(_), do: ""
+
+  @doc """
+  Handles requests for message activity, mimicking SendGrid's API response format.
+  """
+  def get_message_activity(conn) do
+    # Simulate processing delay
+    :timer.sleep(100)
+
+    # SendGrid Message Activity API returns an array of events
+    response = [
+      %{
+        "sg_event_id" => "SG" <> (:crypto.strong_rand_bytes(8) |> Base.encode16(case: :lower)),
+        "event" => "delivered",
+        "email" => "test@example.com",
+        "timestamp" => System.system_time(:second),
+        "smtp-id" => "<" <> generate_message_id() <> ">",
+        "sg_message_id" => generate_message_id(),
+        "response" => "250 2.0.0 OK",
+        "attempt" => "1"
+      },
+      %{
+        "sg_event_id" => "SG" <> (:crypto.strong_rand_bytes(8) |> Base.encode16(case: :lower)),
+        "event" => "processed",
+        "email" => "test@example.com", 
+        "timestamp" => System.system_time(:second) - 10,
+        "smtp-id" => "<" <> generate_message_id() <> ">",
+        "sg_message_id" => generate_message_id()
+      }
+    ]
+
+    Logger.info("Mock SendGrid message activity requested")
+
+    conn
+    |> put_resp_content_type("application/json")
+    |> send_resp(200, Jason.encode!(response))
+  end
 end

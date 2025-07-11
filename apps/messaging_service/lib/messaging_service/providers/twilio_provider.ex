@@ -2,7 +2,8 @@ defmodule MessagingService.Providers.TwilioProvider do
   @moduledoc """
   Twilio provider implementation for SMS and MMS messaging.
 
-  This provider handles sending SMS and MMS messages through Twilio's API.
+  This provider handles sending SMS and MMS messages through the mock provider
+  that simulates Twilio's API endpoints.
   """
 
   @behaviour MessagingService.Provider
@@ -10,7 +11,7 @@ defmodule MessagingService.Providers.TwilioProvider do
   alias MessagingService.Provider
   require Logger
 
-  @base_url "https://api.twilio.com/2010-04-01"
+  @base_url "http://localhost:4001/v1"
 
   @impl Provider
   def send_message(message, config) do
@@ -139,7 +140,7 @@ defmodule MessagingService.Providers.TwilioProvider do
     headers = build_headers(config)
     body = build_request_body(message)
 
-    case make_http_request(url, headers, body) do
+    case make_http_request(:post, url, headers, body) do
       {:ok, %{status_code: 201, body: response_body}} ->
         case Jason.decode(response_body) do
           {:ok, %{"sid" => message_id}} ->
@@ -164,7 +165,7 @@ defmodule MessagingService.Providers.TwilioProvider do
     url = build_twilio_status_url(config[:account_sid], message_id)
     headers = build_headers(config)
 
-    case make_http_request(url, headers, "") do
+    case make_http_request(:get, url, headers, "") do
       {:ok, %{status_code: 200, body: response_body}} ->
         case Jason.decode(response_body) do
           {:ok, %{"status" => status}} ->
@@ -223,41 +224,15 @@ defmodule MessagingService.Providers.TwilioProvider do
     URI.encode_query(params)
   end
 
-  defp make_http_request(url, headers, body) do
-    # In a real implementation, you'd use HTTPoison or Finch
-    # For now, we'll simulate the request
-    simulate_http_request(url, headers, body)
-  end
-
-  defp simulate_http_request(url, _headers, _body) do
-    # Simulate successful response (in a real implementation, this would be an actual HTTP call)
-    try do
-      if String.contains?(url, "Messages.json") and not String.contains?(url, "/Messages/") do
-        # Sending message
-        message_id = "SM" <> (:crypto.strong_rand_bytes(16) |> Base.encode16(case: :lower))
-
-        response_body = %{
-          "sid" => message_id,
-          "status" => "queued",
-          "to" => "+1234567890",
-          "from" => "+0987654321"
-        }
-
-        {:ok, %{status_code: 201, body: Jason.encode!(response_body)}}
-      else
-        # Getting message status
-        response_body = %{
-          "sid" => "SM123456789",
-          "status" => "delivered",
-          "to" => "+1234567890",
-          "from" => "+0987654321"
-        }
-
-        {:ok, %{status_code: 200, body: Jason.encode!(response_body)}}
-      end
-    rescue
-      error ->
-        {:error, error}
+  defp make_http_request(method, url, headers, body) do
+    request = Finch.build(method, url, headers, body)
+    
+    case Finch.request(request, MessagingService.Finch) do
+      {:ok, %Finch.Response{status: status, body: body}} ->
+        {:ok, %{status_code: status, body: body}}
+      
+      {:error, reason} ->
+        {:error, reason}
     end
   end
 end

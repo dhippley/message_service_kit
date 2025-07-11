@@ -50,6 +50,48 @@ defmodule MockProvider.TwilioMock do
     |> send_resp(201, Jason.encode!(response))
   end
 
+  @doc """
+  Handles message status requests, mimicking Twilio's API response format.
+  """
+  def get_message_status(conn) do
+    # Simulate processing delay
+    :timer.sleep(50)
+
+    account_sid = conn.path_params["account_sid"]
+    message_id = conn.path_params["message_id"]
+    
+    response = %{
+      account_sid: account_sid,
+      api_version: "2010-04-01",
+      body: "Hello from mock Twilio",
+      date_created: DateTime.utc_now() |> DateTime.add(-300) |> DateTime.to_iso8601(),
+      date_sent: DateTime.utc_now() |> DateTime.add(-200) |> DateTime.to_iso8601(),
+      date_updated: DateTime.utc_now() |> DateTime.to_iso8601(),
+      direction: "outbound-api",
+      error_code: nil,
+      error_message: nil,
+      from: "+15551234567",
+      messaging_service_sid: nil,
+      num_media: "0",
+      num_segments: "1",
+      price: "-0.00750",
+      price_unit: "USD",
+      sid: message_id,
+      status: "delivered",
+      subresource_uris: %{
+        media: "/2010-04-01/Accounts/#{account_sid}/Messages/#{message_id}/Media.json"
+      },
+      to: "+1234567890",
+      uri: "/2010-04-01/Accounts/#{account_sid}/Messages/#{message_id}.json"
+    }
+
+    Logger.info("Mock Twilio message status requested: #{message_id}")
+
+    conn
+    |> put_resp_content_type("application/json")
+    |> send_resp(200, Jason.encode!(response))
+  end
+
   defp generate_sid do
     32
     |> :crypto.strong_rand_bytes()

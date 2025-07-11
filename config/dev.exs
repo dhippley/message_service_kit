@@ -84,9 +84,6 @@ config :phoenix_live_view,
 # Disable swoosh api client as it is only required for production adapters.
 config :swoosh, :api_client, false
 
-# Sets Failure Rate for the MockProviderServer
-config :messaging_service, MessagingService.MockProviderServer, failure_rate: 0.1
-
 # Configure webhook authentication for development
 config :messaging_service, :webhook_auth,
   bearer_tokens: [
@@ -121,11 +118,6 @@ config :messaging_service, :provider_configs,
       from_name: System.get_env("SENDGRID_FROM_NAME", "Test Service")
     },
     enabled: false
-  },
-  mock: %{
-    provider: :mock,
-    config: %{provider_name: :generic},
-    enabled: true
   }
 
 # Configure the environment for provider manager

@@ -20,13 +20,6 @@ defmodule MessagingService.Application do
       MessagingServiceWeb.Endpoint
     ]
 
-    # Add mock provider supervisor only in dev environment
-    children = if Application.get_env(:messaging_service, :env) == :dev do
-      [MessagingService.MockProviderSupervisor | children]
-    else
-      children
-    end
-
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
     opts = [strategy: :one_for_one, name: MessagingService.Supervisor]

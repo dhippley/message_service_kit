@@ -9,7 +9,7 @@ defmodule MockProvider.Router do
 
   plug Plug.Logger
   plug :match
-  plug Plug.Parsers, parsers: [:json], json_decoder: Jason
+  plug Plug.Parsers, parsers: [:urlencoded, :json], json_decoder: Jason
   plug :dispatch
 
   # Twilio-like SMS endpoint
@@ -17,9 +17,24 @@ defmodule MockProvider.Router do
     MockProvider.TwilioMock.send_message(conn)
   end
 
+  # Twilio-like SMS endpoint with .json extension  
+  post "/v1/Accounts/:account_sid/Messages.json" do
+    MockProvider.TwilioMock.send_message(conn)
+  end
+
+  # Twilio-like SMS status endpoint
+  get "/v1/Accounts/:account_sid/Messages/:message_id.json" do
+    MockProvider.TwilioMock.get_message_status(conn)
+  end
+
   # SendGrid-like email endpoint  
   post "/v3/mail/send" do
     MockProvider.SendGridMock.send_email(conn)
+  end
+
+  # SendGrid message activity endpoint
+  get "/v3/messages" do
+    MockProvider.SendGridMock.get_message_activity(conn)
   end
 
   # Health check

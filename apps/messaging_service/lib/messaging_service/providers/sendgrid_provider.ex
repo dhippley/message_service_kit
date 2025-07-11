@@ -2,7 +2,8 @@ defmodule MessagingService.Providers.SendGridProvider do
   @moduledoc """
   SendGrid provider implementation for email messaging.
 
-  This provider handles sending emails through SendGrid's API.
+  This provider handles sending emails through the mock provider
+  that simulates SendGrid's API endpoints.
   """
 
   @behaviour MessagingService.Provider
@@ -10,7 +11,7 @@ defmodule MessagingService.Providers.SendGridProvider do
   alias MessagingService.Provider
   require Logger
 
-  @base_url "https://api.sendgrid.com/v3"
+  @base_url "http://localhost:4001/v3"
 
   @impl Provider
   def send_message(message, config) do
@@ -128,7 +129,7 @@ defmodule MessagingService.Providers.SendGridProvider do
     headers = build_headers(config)
     body = build_request_body(message, config)
 
-    case make_http_request(url, headers, body) do
+    case make_http_request(:post, url, headers, body) do
       {:ok, %{status_code: 202}} ->
         # SendGrid returns 202 for successful queuing
         # Generate a message ID for tracking
@@ -152,7 +153,7 @@ defmodule MessagingService.Providers.SendGridProvider do
     url = build_sendgrid_activity_url()
     headers = build_headers(config)
 
-    case make_http_request(url, headers, "") do
+    case make_http_request(:get, url, headers, "") do
       {:ok, %{status_code: 200, body: response_body}} ->
         case Jason.decode(response_body) do
           {:ok, activities} when is_list(activities) ->
@@ -239,34 +240,15 @@ defmodule MessagingService.Providers.SendGridProvider do
     "SG" <> (:crypto.strong_rand_bytes(16) |> Base.encode16(case: :lower))
   end
 
-  defp make_http_request(url, headers, body) do
-    # In a real implementation, you'd use HTTPoison or Finch
-    # For now, we'll simulate the request
-    simulate_http_request(url, headers, body)
-  end
-
-  defp simulate_http_request(url, _headers, _body) do
-    # Simulate successful response (in a real implementation, this would be an actual HTTP call)
-    try do
-      if String.contains?(url, "mail/send") do
-        # Sending email
-        {:ok, %{status_code: 202, body: ""}}
-      else
-        # Getting message activity
-        response_body = [
-          %{
-            "msg_id" => "SG123456789",
-            "event" => "delivered",
-            "email" => "test@example.com",
-            "timestamp" => :os.system_time(:second)
-          }
-        ]
-
-        {:ok, %{status_code: 200, body: Jason.encode!(response_body)}}
-      end
-    rescue
-      error ->
-        {:error, error}
+  defp make_http_request(method, url, headers, body) do
+    request = Finch.build(method, url, headers, body)
+    
+    case Finch.request(request, MessagingService.Finch) do
+      {:ok, %Finch.Response{status: status, body: body}} ->
+        {:ok, %{status_code: status, body: body}}
+      
+      {:error, reason} ->
+        {:error, reason}
     end
   end
 end

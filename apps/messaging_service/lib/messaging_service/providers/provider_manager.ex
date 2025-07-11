@@ -6,7 +6,7 @@ defmodule MessagingService.Providers.ProviderManager do
   including configuration, provider selection, and message sending coordination.
   """
 
-  alias MessagingService.Providers.{TwilioProvider, SendGridProvider, MockProvider}
+  alias MessagingService.Providers.{TwilioProvider, SendGridProvider}
   require Logger
 
   @type provider_name :: :twilio | :sendgrid | :mock
@@ -18,8 +18,7 @@ defmodule MessagingService.Providers.ProviderManager do
 
   @providers %{
     twilio: TwilioProvider,
-    sendgrid: SendGridProvider,
-    mock: MockProvider
+    sendgrid: SendGridProvider
   }
 
   @doc """
