@@ -8,12 +8,12 @@ defmodule MessagingService.Message do
 
   use Ecto.Schema
 
-  @derive {Jason.Encoder, except: [:__meta__, :attachments, :conversation]}
-
   import Ecto.Changeset
 
   alias Ecto.Association.NotLoaded
   alias MessagingService.Attachment
+
+  @derive {Jason.Encoder, except: [:__meta__, :attachments, :conversation]}
 
   @type t :: %__MODULE__{
           id: binary() | nil,
@@ -43,7 +43,7 @@ defmodule MessagingService.Message do
     field :provider_name, :string
     field :timestamp, :naive_datetime_usec
     field :conversation_id, :binary_id
-    
+
     # Status tracking fields
     field :status, :string, default: "pending"
     field :direction, :string, default: "outbound"

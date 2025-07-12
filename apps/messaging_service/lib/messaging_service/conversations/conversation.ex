@@ -8,11 +8,11 @@ defmodule MessagingService.Conversation do
 
   use Ecto.Schema
 
-  @derive {Jason.Encoder, except: [:__meta__, :messages]}
-
   import Ecto.Changeset
 
   alias MessagingService.Message
+
+  @derive {Jason.Encoder, except: [:__meta__, :messages]}
 
   @type t :: %__MODULE__{
           id: binary() | nil,

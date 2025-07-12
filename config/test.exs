@@ -26,18 +26,18 @@ config :messaging_service, MessagingServiceWeb.Endpoint,
   secret_key_base: "z49t8pFuU3DCRpj4Y9BeKVy8b/i5Yy9/bPh0BbBUudoSJxt2RUqp4ilvnS05P05g",
   server: true
 
-# Set environment
-config :messaging_service, :env, :test
-
-# Configure the environment for provider manager
-config :messaging_service, :environment, :test
-
 # Configure Oban for testing - disable queues to prevent jobs from running during tests
 config :messaging_service, Oban,
   repo: MessagingService.Repo,
   testing: :inline,
   queues: false,
   plugins: false
+
+# Set environment
+config :messaging_service, :env, :test
+
+# Configure the environment for provider manager
+config :messaging_service, :environment, :test
 
 # Configure messaging providers for test
 config :messaging_service, :provider_configs,

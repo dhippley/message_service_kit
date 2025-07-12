@@ -20,6 +20,7 @@ defmodule MessagingServiceWeb.ConnCase do
   using do
     quote do
       use MessagingServiceWeb, :verified_routes
+
       import MessagingServiceWeb.ConnCase
       import Phoenix.ConnTest
       import Plug.Conn

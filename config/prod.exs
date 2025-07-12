@@ -15,10 +15,11 @@ config :messaging_service, Oban,
   repo: MessagingService.Repo,
   plugins: [
     Oban.Plugins.Pruner,
-    {Oban.Plugins.Cron, crontab: [
-      # Add any cron jobs here
-      # {"0 2 * * *", MyApp.DailyWorker}
-    ]}
+    {Oban.Plugins.Cron,
+     crontab: [
+       # Add any cron jobs here
+       # {"0 2 * * *", MyApp.DailyWorker}
+     ]}
   ],
   queues: [default: 10, mailers: 20, events: 50, media: 10]
 

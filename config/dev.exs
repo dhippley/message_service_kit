@@ -58,24 +58,23 @@ config :messaging_service, MessagingServiceWeb.Endpoint,
     ]
   ]
 
-# Set environment
-#       certfile: "priv/cert/selfsigned.pem"
-#     ],
-#
-config :messaging_service, :env, :dev
-
-# Configure the environment for provider manager
-# If desired, both `http:` and `https:` keys can be
-# configured to run both http and https servers on
-# different ports.
-
-config :messaging_service, :environment, :dev
-
 # Configure Oban for background job processing
 config :messaging_service, Oban,
   repo: MessagingService.Repo,
   plugins: [Oban.Plugins.Pruner],
+  # Configure the environment for provider manager
+  # If desired, both `http:` and `https:` keys can be
+  # configured to run both http and https servers on
   queues: [default: 10, mailers: 20, events: 50, media: 10]
+
+# Set environment
+# different ports.
+
+#       certfile: "priv/cert/selfsigned.pem"
+#     ],
+#
+config :messaging_service, :env, :dev
+config :messaging_service, :environment, :dev
 
 # Configure messaging providers
 config :messaging_service, :provider_configs,

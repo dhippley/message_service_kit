@@ -54,7 +54,7 @@ defmodule MessagingService.Workers.MessageDeliveryWorker do
       {:ok, %Oban.Job{}}
   """
   def enqueue_delivery(message_id, opts \\ []) do
-    %{message_id: message_id}
+    %{"message_id" => message_id}
     |> new(opts)
     |> Oban.insert()
   end
@@ -69,7 +69,7 @@ defmodule MessagingService.Workers.MessageDeliveryWorker do
       {:ok, %Oban.Job{}}
   """
   def enqueue_scheduled_delivery(message_id, scheduled_at) do
-    %{message_id: message_id}
+    %{"message_id" => message_id}
     |> new(scheduled_at: scheduled_at)
     |> Oban.insert()
   end
@@ -84,12 +84,17 @@ defmodule MessagingService.Workers.MessageDeliveryWorker do
       {:ok, [%Oban.Job{}, %Oban.Job{}, %Oban.Job{}]}
   """
   def enqueue_batch_delivery(message_ids) when is_list(message_ids) do
-    jobs =
-      Enum.map(message_ids, fn message_id ->
-        new(%{message_id: message_id})
-      end)
+    if Enum.empty?(message_ids) do
+      {:ok, []}
+    else
+      jobs =
+        Enum.map(message_ids, fn message_id ->
+          new(%{"message_id" => message_id})
+        end)
 
-    Oban.insert_all(jobs)
+      result = Oban.insert_all(jobs)
+      {:ok, result}
+    end
   end
 
   # Private helper functions

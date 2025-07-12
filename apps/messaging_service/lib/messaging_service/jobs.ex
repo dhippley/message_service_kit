@@ -6,7 +6,7 @@ defmodule MessagingService.Jobs do
   background jobs using Oban.
   """
 
-  alias MessagingService.Workers.{MessageDeliveryWorker, WebhookProcessorWorker}
+  alias MessagingService.Workers.MessageDeliveryWorker
 
   @doc """
   Enqueues a message for background delivery.
@@ -49,34 +49,9 @@ defmodule MessagingService.Jobs do
     MessageDeliveryWorker.enqueue_batch_delivery(message_ids)
   end
 
-  @doc """
-  Enqueues a webhook for background processing.
-
-  ## Examples
-
-      iex> webhook_data = %{"MessageSid" => "SM123", "MessageStatus" => "delivered"}
-      iex> MessagingService.Jobs.process_webhook_async(webhook_data, "twilio", "delivery_status")
-      {:ok, %Oban.Job{}}
-  """
-  def process_webhook_async(webhook_data, provider, webhook_type, opts \\ %{}) do
-    WebhookProcessorWorker.enqueue_webhook(webhook_data, provider, webhook_type, opts)
-  end
-
-  @doc """
-  Processes multiple webhooks in batch.
-
-  ## Examples
-
-      iex> webhooks = [
-      ...>   {data1, "twilio", "delivery_status"},
-      ...>   {data2, "sendgrid", "inbound_message"}
-      ...> ]
-      iex> MessagingService.Jobs.process_webhooks_batch(webhooks)
-      {:ok, [%Oban.Job{}, %Oban.Job{}]}
-  """
-  def process_webhooks_batch(webhook_list) when is_list(webhook_list) do
-    WebhookProcessorWorker.enqueue_batch_webhooks(webhook_list)
-  end
+  # Future: Add webhook processing functions here when needed
+  # def process_webhook_async(webhook_data, provider, webhook_type, opts \\ %{})
+  # def process_webhooks_batch(webhook_list)
 
   @doc """
   Gets the status of jobs in a specific queue.
@@ -89,12 +64,12 @@ defmodule MessagingService.Jobs do
   def get_queue_stats(queue_name) do
     import Ecto.Query
 
-    MessagingService.Repo.all(
-      from j in Oban.Job,
-        where: j.queue == ^queue_name,
-        group_by: j.state,
-        select: {j.state, count(j.id)}
+    from(j in Oban.Job,
+      where: j.queue == ^queue_name,
+      group_by: j.state,
+      select: {j.state, count(j.id)}
     )
+    |> MessagingService.Repo.all()
     |> Map.new()
   end
 
@@ -156,8 +131,9 @@ defmodule MessagingService.Jobs do
 
     MessagingService.Repo.update_all(
       from(j in Oban.Job,
-        where: j.state in ["available", "scheduled"] and
-               fragment("?->>'message_id' = ?", j.args, ^message_id)
+        where:
+          j.state in ["available", "scheduled"] and
+            fragment("?->>'message_id' = ?", j.args, ^message_id)
       ),
       set: [state: "cancelled"]
     )
@@ -179,8 +155,9 @@ defmodule MessagingService.Jobs do
 
     MessagingService.Repo.delete_all(
       from j in Oban.Job,
-        where: j.state in ["completed", "discarded"] and
-               j.inserted_at < ^cutoff_date
+        where:
+          j.state in ["completed", "discarded"] and
+            j.inserted_at < ^cutoff_date
     )
   end
 end
