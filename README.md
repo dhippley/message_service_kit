@@ -13,14 +13,8 @@ A comprehensive Elixir umbrella project for messaging services, providing a unif
 # Install dependencies
 mix deps.get
 
-# Setup database (for messaging_service)
-cd apps/messaging_service && mix ecto.setup && cd ../..
-
-# Start mock provider (in one terminal)
-cd apps/mock_provider && mix run --no-halt
-
-# Start messaging service (in another terminal)  
-cd apps/messaging_service && mix phx.server
+# Start the App
+./bin/start.sh
 ```
 
 ## Using the Makefile
