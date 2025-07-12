@@ -2,7 +2,7 @@ defmodule MessagingServiceWeb.ConversationController do
   @moduledoc """
   Controller for managing conversations and retrieving messages.
 
-  This controller provides endpoints to list conversations and retrieve 
+  This controller provides endpoints to list conversations and retrieve
   messages within a specific conversation.
   """
 

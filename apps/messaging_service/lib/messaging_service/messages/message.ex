@@ -8,6 +8,8 @@ defmodule MessagingService.Message do
 
   use Ecto.Schema
 
+  @derive {Jason.Encoder, except: [:__meta__, :attachments, :conversation]}
+
   import Ecto.Changeset
 
   alias Ecto.Association.NotLoaded

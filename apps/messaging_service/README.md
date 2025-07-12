@@ -5,15 +5,18 @@ A comprehensive Phoenix-based messaging service that provides a unified API for 
 ## Features
 
 - **Multi-Provider Support**: Twilio for SMS/MMS, SendGrid for email
-- **Unified API**: Single interface for all message types
+- **Unified API**: Single interface for all message types with dedicated endpoints
+- **Bidirectional Messaging**: Send outbound messages and receive inbound via webhooks
 - **Message Tracking**: Real-time status updates and delivery tracking
-- **Conversation Management**: Thread messages together for context
+- **Conversation Management**: Automatic conversation threading and message retrieval
 - **Attachment Support**: Handle file attachments for MMS and email
-- **Webhook Integration**: Receive delivery status updates from providers
-- **Database Persistence**: Full message history and metadata storage
-- **Provider Abstraction**: Easy to add new messaging providers
+- **Webhook Integration**: Receive inbound messages and delivery status updates
+- **Database Persistence**: Full message history and metadata storage with PostgreSQL
+- **Provider Abstraction**: Easy to add new messaging providers via behavior pattern
 - **Authentication**: Secure webhook endpoints with bearer tokens and API keys
 - **Development Support**: Mock provider integration for testing
+- **Code Quality**: Integrated Dialyzer, Credo, and formatting tools
+- **RESTful API**: Clean, consistent HTTP endpoints for all operations
 
 ## Architecture
 
@@ -23,7 +26,7 @@ The application follows a clean architecture pattern with the following layers:
 ├── lib/messaging_service/
 │   ├── contexts/           # Business logic and data access
 │   │   ├── conversations/  # Conversation management
-│   │   ├── messages/       # Message handling
+│   │   ├── messages/       # Message handling and persistence
 │   │   └── attachments/    # File attachment management
 │   ├── providers/          # External service integrations
 │   │   ├── provider.ex     # Provider behavior definition
@@ -36,9 +39,33 @@ The application follows a clean architecture pattern with the following layers:
 │       └── attachment.ex
 ├── lib/messaging_service_web/
 │   ├── controllers/        # HTTP endpoints
-│   ├── live/              # LiveView components
-│   └── views/             # Response formatting
+│   │   ├── message_controller.ex     # Outbound message sending
+│   │   ├── conversation_controller.ex # Conversation management
+│   │   └── webhook_controller.ex     # Inbound message webhooks
+│   ├── plugs/             # Authentication and middleware
+│   └── router.ex          # Route definitions
 ```
+
+## API Endpoints Reference
+
+### Outbound Messaging
+- `POST /api/messages/sms` - Send SMS/MMS messages
+- `POST /api/messages/email` - Send email messages
+
+### Conversation Management  
+- `GET /api/conversations` - List all conversations with latest messages
+- `GET /api/conversations/:id/messages` - Get all messages for a conversation
+
+### Inbound Webhooks (Generic Format)
+- `POST /api/webhooks/sms` - Receive inbound SMS/MMS
+- `POST /api/webhooks/email` - Receive inbound email
+
+### Provider-Specific Webhooks (Authenticated)
+- `POST /api/webhooks/twilio` - Twilio webhook format
+- `POST /api/webhooks/sendgrid` - SendGrid webhook format
+
+### System
+- `GET /api/webhooks/health` - Health check endpoint
 
 ## Quick Start
 
@@ -134,83 +161,120 @@ config :messaging_service, :webhook_auth,
 
 ### Sending Messages
 
-#### SMS via Twilio
+#### Send SMS
 ```bash
-POST /api/messages
+POST /api/messages/sms
 Content-Type: application/json
 
 {
-  "type": "sms",
   "to": "+1234567890",
   "from": "+0987654321",
-  "body": "Hello from MessagingService!",
-  "provider": "twilio"
+  "body": "Hello from MessagingService!"
 }
 ```
 
-#### Email via SendGrid
+Response:
+```json
+{
+  "success": true,
+  "status": "queued",
+  "message": "SMS queued for delivery",
+  "message_id": "550e8400-e29b-41d4-a716-446655440000"
+}
+```
+
+#### Send Email
 ```bash
-POST /api/messages
+POST /api/messages/email
 Content-Type: application/json
 
 {
-  "type": "email",
   "to": "user@example.com",
   "from": "sender@yourdomain.com",
   "subject": "Welcome!",
-  "body": "Welcome to our service!",
-  "provider": "sendgrid"
+  "body": "Welcome to our service!"
 }
 ```
 
-#### MMS with Attachments
+Response:
+```json
+{
+  "success": true,
+  "status": "queued", 
+  "message": "Email queued for delivery",
+  "message_id": "550e8400-e29b-41d4-a716-446655440001"
+}
+```
+
+#### Send MMS with Attachments
 ```bash
-POST /api/messages
+POST /api/messages/sms
 Content-Type: application/json
 
 {
-  "type": "mms",
   "to": "+1234567890",
   "from": "+0987654321",
   "body": "Check out this image!",
-  "provider": "twilio",
+  "type": "mms",
   "attachments": [
     {
       "filename": "image.jpg",
       "content_type": "image/jpeg",
-      "data": "base64_encoded_data"
+      "url": "https://example.com/image.jpg"
     }
   ]
 }
 ```
 
-### Message Status
+### Conversation Management
 
-Check message delivery status:
-
+#### List All Conversations
 ```bash
-GET /api/messages/{message_id}/status
+GET /api/conversations
 ```
 
-### Conversations
-
-Create and manage message conversations:
-
-```bash
-POST /api/conversations
+Response:
+```json
 {
-  "title": "Customer Support",
-  "participants": ["+1234567890", "support@company.com"]
+  "success": true,
+  "count": 2,
+  "data": [
+    {
+      "contact1": "+1234567890",
+      "contact2": "+0987654321",
+      "latest_timestamp": "2025-07-12T14:46:36.429564",
+      "latest_message": {
+        "id": "550e8400-e29b-41d4-a716-446655440000",
+        "type": "sms",
+        "body": "Hello from MessagingService!",
+        "timestamp": "2025-07-12T14:46:36.429564"
+      }
+    }
+  ]
 }
 ```
 
-Add message to conversation:
+#### Get Messages for Conversation
 ```bash
-POST /api/conversations/{conversation_id}/messages
+GET /api/conversations/{conversation_id}/messages
+```
+
+Response:
+```json
 {
-  "type": "sms",
-  "to": "+1234567890",
-  "body": "Thanks for contacting support!"
+  "success": true,
+  "count": 5,
+  "conversation_id": "550e8400-e29b-41d4-a716-446655440000",
+  "data": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440001",
+      "type": "sms",
+      "body": "Hello!",
+      "to": "+1234567890",
+      "from": "+0987654321",
+      "timestamp": "2025-07-12T14:46:36.429564"
+    }
+  ]
 }
 ```
 
@@ -358,6 +422,39 @@ mix test test/messaging_service_web/controllers/
 
 # Run with coverage
 mix test --cover
+```
+
+### Testing the API
+
+A comprehensive test script is provided to verify all endpoints:
+
+```bash
+# Make test script executable and run
+chmod +x bin/test.sh
+./bin/test.sh
+```
+
+The test script validates:
+- SMS sending endpoint
+- Email sending endpoint  
+- Inbound SMS webhook
+- Inbound email webhook
+- Conversation listing
+- Message retrieval for conversations
+
+Example test output:
+```
+=== Testing Messaging Service Endpoints ===
+1. Testing SMS send...
+{"message":"SMS queued for delivery","status":"queued","success":true,"message_id":"..."}
+Status: 201
+
+2. Testing Email send...
+{"message":"Email queued for delivery","status":"queued","success":true,"message_id":"..."}
+Status: 201
+
+...
+=== Test script completed ===
 ```
 
 ### Database Operations

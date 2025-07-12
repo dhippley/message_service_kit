@@ -19,7 +19,7 @@ defmodule MessagingServiceWeb.MessageController do
   ```json
   {
     "from": "+1234567890",
-    "to": "+1987654321", 
+    "to": "+1987654321",
     "type": "sms", // or "mms"
     "body": "Hello world!",
     "attachments": null, // or ["url1", "url2"] for MMS
