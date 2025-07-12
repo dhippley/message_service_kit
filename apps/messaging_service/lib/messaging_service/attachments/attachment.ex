@@ -8,6 +8,8 @@ defmodule MessagingService.Attachment do
 
   use Ecto.Schema
 
+  @derive {Jason.Encoder, except: [:__meta__, :blob]}
+
   import Ecto.Changeset
 
   @type t :: %__MODULE__{

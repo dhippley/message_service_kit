@@ -87,7 +87,7 @@ defmodule MessagingService.Conversations do
 
   """
   def get_conversation_with_messages!(id) do
-    messages_query = from(m in Message, order_by: [asc: m.timestamp])
+    messages_query = from(m in Message, order_by: [asc: m.timestamp], preload: :attachments)
 
     Conversation
     |> preload(messages: ^messages_query)

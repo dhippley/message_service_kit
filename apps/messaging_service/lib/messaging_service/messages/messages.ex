@@ -440,7 +440,8 @@ defmodule MessagingService.Messages do
       from(m in Message,
         where: (m.from == ^contact1 and m.to == ^contact2) or (m.from == ^contact2 and m.to == ^contact1),
         order_by: [desc: m.timestamp],
-        limit: 1
+        limit: 1,
+        preload: :attachments
       )
     )
   end
