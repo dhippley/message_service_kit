@@ -6,7 +6,9 @@ defmodule MessagingService.Providers.ProviderManager do
   including configuration, provider selection, and message sending coordination.
   """
 
-  alias MessagingService.Providers.{TwilioProvider, SendGridProvider}
+  alias MessagingService.Providers.SendGridProvider
+  alias MessagingService.Providers.TwilioProvider
+
   require Logger
 
   @type provider_name :: :twilio | :sendgrid | :mock
@@ -77,8 +79,7 @@ defmodule MessagingService.Providers.ProviderManager do
   """
   def validate_configurations(provider_configs) do
     errors =
-      provider_configs
-      |> Enum.reduce([], fn {provider_name, config}, acc ->
+      Enum.reduce(provider_configs, [], fn {provider_name, config}, acc ->
         case validate_provider_configuration(provider_name, config) do
           :ok -> acc
           {:error, reason} -> [{provider_name, reason} | acc]
@@ -99,15 +100,14 @@ defmodule MessagingService.Providers.ProviderManager do
   - Map of provider information
   """
   def list_providers do
-    @providers
-    |> Enum.map(fn {name, module} ->
-      {name, %{
-        module: module,
-        name: module.provider_name(),
-        supported_types: module.supported_types()
-      }}
+    Map.new(@providers, fn {name, module} ->
+      {name,
+       %{
+         module: module,
+         name: module.provider_name(),
+         supported_types: module.supported_types()
+       }}
     end)
-    |> Map.new()
   end
 
   @doc """
@@ -123,12 +123,10 @@ defmodule MessagingService.Providers.ProviderManager do
   """
   def validate_message_for_provider(message, provider_name) do
     with {:ok, provider_module} <- get_provider_module(provider_name) do
-      cond do
-        message.type not in provider_module.supported_types() ->
-          {:error, "Provider #{provider_name} does not support #{message.type} messages"}
-
-        true ->
-          provider_module.validate_recipient(message.to, message.type)
+      if message.type in provider_module.supported_types() do
+        provider_module.validate_recipient(message.to, message.type)
+      else
+        {:error, "Provider #{provider_name} does not support #{message.type} messages"}
       end
     end
   end
@@ -138,8 +136,7 @@ defmodule MessagingService.Providers.ProviderManager do
   defp select_provider(message, provider_configs) do
     # Find providers that support the message type and are enabled
     suitable_providers =
-      provider_configs
-      |> Enum.filter(fn {provider_name, config} ->
+      Enum.filter(provider_configs, fn {provider_name, config} ->
         config[:enabled] == true and
           provider_supports_type?(provider_name, message.type)
       end)
@@ -167,17 +164,17 @@ defmodule MessagingService.Providers.ProviderManager do
 
   defp select_by_priority(providers, message_type) do
     # Priority order: specific providers first, then mock
-    priority_order = case message_type do
-      :sms -> [:twilio, :mock]
-      :mms -> [:twilio, :mock]
-      :email -> [:sendgrid, :mock]
-    end
+    priority_order =
+      case message_type do
+        :sms -> [:twilio, :mock]
+        :mms -> [:twilio, :mock]
+        :email -> [:sendgrid, :mock]
+      end
 
     provider_names = Enum.map(providers, fn {name, _config} -> name end)
 
     selected =
-      priority_order
-      |> Enum.find(fn provider -> provider in provider_names end)
+      Enum.find(priority_order, fn provider -> provider in provider_names end)
 
     selected || hd(provider_names)
   end

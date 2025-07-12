@@ -7,8 +7,10 @@ defmodule MessagingService.Message do
   """
 
   use Ecto.Schema
+
   import Ecto.Changeset
 
+  alias Ecto.Association.NotLoaded
   alias MessagingService.Attachment
 
   @type t :: %__MODULE__{
@@ -21,8 +23,8 @@ defmodule MessagingService.Message do
           provider_name: String.t() | nil,
           timestamp: NaiveDateTime.t() | nil,
           conversation_id: binary() | nil,
-          attachments: [Attachment.t()] | Ecto.Association.NotLoaded.t(),
-          conversation: MessagingService.Conversation.t() | Ecto.Association.NotLoaded.t(),
+          attachments: [Attachment.t()] | NotLoaded.t(),
+          conversation: MessagingService.Conversation.t() | NotLoaded.t(),
           inserted_at: NaiveDateTime.t() | nil,
           updated_at: NaiveDateTime.t() | nil
         }
@@ -133,10 +135,7 @@ defmodule MessagingService.Message do
   defp validate_message_type(changeset) do
     valid_types = ["sms", "mms", "email"]
 
-    changeset
-    |> validate_inclusion(:type, valid_types,
-      message: "must be one of: #{Enum.join(valid_types, ", ")}"
-    )
+    validate_inclusion(changeset, :type, valid_types, message: "must be one of: #{Enum.join(valid_types, ", ")}")
   end
 
   defp validate_contact_format(changeset) do
@@ -166,41 +165,26 @@ defmodule MessagingService.Message do
 
   defp validate_email_address(changeset, field) do
     changeset
-    |> validate_format(field, ~r/^[^\s]+@[^\s]+\.[^\s]+$/,
-      message: "must be a valid email address"
-    )
+    |> validate_format(field, ~r/^[^\s]+@[^\s]+\.[^\s]+$/, message: "must be a valid email address")
     # RFC 5321 limit
     |> validate_length(field, max: 320)
   end
 
   defp validate_body_content(changeset) do
-    changeset
-    |> validate_length(:body, min: 1, message: "cannot be empty")
+    validate_length(changeset, :body, min: 1, message: "cannot be empty")
   end
 
   defp validate_sms_body_length(changeset) do
-    changeset
-    |> validate_length(:body,
-      max: 160,
-      message: "SMS body cannot exceed 160 characters"
-    )
+    validate_length(changeset, :body, max: 160, message: "SMS body cannot exceed 160 characters")
   end
 
   defp validate_mms_body_length(changeset) do
-    changeset
-    |> validate_length(:body,
-      max: 1600,
-      message: "MMS body cannot exceed 1600 characters"
-    )
+    validate_length(changeset, :body, max: 1600, message: "MMS body cannot exceed 1600 characters")
   end
 
   defp validate_email_body(changeset) do
     # Email bodies can be much longer, but let's set a reasonable limit
-    changeset
-    |> validate_length(:body,
-      max: 100_000,
-      message: "Email body is too long"
-    )
+    validate_length(changeset, :body, max: 100_000, message: "Email body is too long")
   end
 
   defp maybe_set_timestamp(changeset) do
@@ -209,7 +193,7 @@ defmodule MessagingService.Message do
         put_change(
           changeset,
           :timestamp,
-          NaiveDateTime.utc_now() |> NaiveDateTime.truncate(:microsecond)
+          NaiveDateTime.truncate(NaiveDateTime.utc_now(), :microsecond)
         )
 
       _ ->

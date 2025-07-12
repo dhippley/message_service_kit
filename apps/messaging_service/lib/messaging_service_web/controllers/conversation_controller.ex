@@ -7,9 +7,11 @@ defmodule MessagingServiceWeb.ConversationController do
   """
 
   use MessagingServiceWeb, :controller
-  require Logger
 
-  alias MessagingService.{Messages, Conversations}
+  alias MessagingService.Conversations
+  alias MessagingService.Messages
+
+  require Logger
 
   @doc """
   Lists all conversations.
@@ -21,7 +23,7 @@ defmodule MessagingServiceWeb.ConversationController do
 
     try do
       conversations = Messages.list_conversations()
-      
+
       conn
       |> put_status(:ok)
       |> json(%{
@@ -32,7 +34,7 @@ defmodule MessagingServiceWeb.ConversationController do
     rescue
       error ->
         Logger.error("Failed to retrieve conversations: #{inspect(error)}")
-        
+
         conn
         |> put_status(:internal_server_error)
         |> json(%{
@@ -62,7 +64,7 @@ defmodule MessagingServiceWeb.ConversationController do
 
         conversation ->
           conversation_with_messages = Conversations.get_conversation_with_messages!(conversation_id)
-          
+
           conn
           |> put_status(:ok)
           |> json(%{
@@ -75,7 +77,7 @@ defmodule MessagingServiceWeb.ConversationController do
     rescue
       error ->
         Logger.error("Failed to retrieve messages for conversation #{conversation_id}: #{inspect(error)}")
-        
+
         conn
         |> put_status(:internal_server_error)
         |> json(%{

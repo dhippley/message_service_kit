@@ -7,8 +7,9 @@ defmodule MessagingService.Attachments do
   """
 
   import Ecto.Query, warn: false
-  alias MessagingService.Repo
+
   alias MessagingService.Attachment
+  alias MessagingService.Repo
 
   @doc """
   Returns the list of attachments.
@@ -148,8 +149,7 @@ defmodule MessagingService.Attachments do
 
   """
   def list_attachments_by_type(type) do
-    from(a in Attachment, where: a.attachment_type == ^type)
-    |> Repo.all()
+    Repo.all(from(a in Attachment, where: a.attachment_type == ^type))
   end
 
   @doc """
@@ -162,8 +162,7 @@ defmodule MessagingService.Attachments do
 
   """
   def list_attachments_by_content_type(content_type) do
-    from(a in Attachment, where: a.content_type == ^content_type)
-    |> Repo.all()
+    Repo.all(from(a in Attachment, where: a.content_type == ^content_type))
   end
 
   @doc """
@@ -194,8 +193,7 @@ defmodule MessagingService.Attachments do
 
   """
   def get_large_attachments(min_size) do
-    from(a in Attachment, where: a.size > ^min_size, order_by: [desc: a.size])
-    |> Repo.all()
+    Repo.all(from(a in Attachment, where: a.size > ^min_size, order_by: [desc: a.size]))
   end
 
   @doc """

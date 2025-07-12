@@ -1,7 +1,8 @@
 defmodule MessagingServiceWeb.WebhookControllerTest do
   use MessagingServiceWeb.ConnCase, async: true
 
-  alias MessagingService.{Messages, Conversations}
+  alias MessagingService.Conversations
+  alias MessagingService.Messages
 
   @valid_bearer_token "dev-bearer-token-123"
   @valid_api_key "dev-api-key-123"

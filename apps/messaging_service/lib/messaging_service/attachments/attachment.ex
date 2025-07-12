@@ -7,6 +7,7 @@ defmodule MessagingService.Attachment do
   """
 
   use Ecto.Schema
+
   import Ecto.Changeset
 
   @type t :: %__MODULE__{
@@ -164,17 +165,14 @@ defmodule MessagingService.Attachment do
       "other"
     ]
 
-    changeset
-    |> validate_inclusion(:attachment_type, valid_types,
+    validate_inclusion(changeset, :attachment_type, valid_types,
       message: "must be one of: #{Enum.join(valid_types, ", ")}"
     )
   end
 
   defp validate_content_type(changeset) do
     changeset
-    |> validate_format(:content_type, ~r/^[a-z-]+\/[a-z0-9\.\-\+]+$/i,
-      message: "must be a valid MIME type"
-    )
+    |> validate_format(:content_type, ~r/^[a-z-]+\/[a-z0-9\.\-\+]+$/i, message: "must be a valid MIME type")
     |> validate_length(:content_type, max: 255)
   end
 
@@ -215,7 +213,7 @@ defmodule MessagingService.Attachment do
         changeset
 
       blob when is_binary(blob) ->
-        checksum = :crypto.hash(:sha256, blob) |> Base.encode16(case: :lower)
+        checksum = :sha256 |> :crypto.hash(blob) |> Base.encode16(case: :lower)
         put_change(changeset, :checksum, checksum)
 
       _ ->
@@ -235,11 +233,9 @@ defmodule MessagingService.Attachment do
       :blob
 
   """
-  def storage_type(%__MODULE__{url: url, blob: blob}) when not is_nil(url) and is_nil(blob),
-    do: :url
+  def storage_type(%__MODULE__{url: url, blob: blob}) when not is_nil(url) and is_nil(blob), do: :url
 
-  def storage_type(%__MODULE__{url: url, blob: blob}) when is_nil(url) and not is_nil(blob),
-    do: :blob
+  def storage_type(%__MODULE__{url: url, blob: blob}) when is_nil(url) and not is_nil(blob), do: :blob
 
   def storage_type(_), do: :unknown
 

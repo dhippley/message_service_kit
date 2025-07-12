@@ -157,9 +157,8 @@ defmodule MessagingService.Provider do
   def validate_message_request(message) when is_map(message) do
     with :ok <- validate_required_fields(message),
          :ok <- validate_message_content(message.body),
-         :ok <- validate_recipient_for_type(message.to, message.type),
-         :ok <- validate_recipient_for_type(message.from, message.type) do
-      :ok
+         :ok <- validate_recipient_for_type(message.to, message.type) do
+      validate_recipient_for_type(message.from, message.type)
     end
   end
 
@@ -169,8 +168,7 @@ defmodule MessagingService.Provider do
     required_fields = [:type, :to, :from, :body]
 
     missing_fields =
-      required_fields
-      |> Enum.filter(fn field -> not Map.has_key?(message, field) end)
+      Enum.filter(required_fields, fn field -> not Map.has_key?(message, field) end)
 
     if missing_fields == [] do
       :ok

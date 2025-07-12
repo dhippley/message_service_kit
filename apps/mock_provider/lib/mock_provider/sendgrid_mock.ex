@@ -4,6 +4,7 @@ defmodule MockProvider.SendGridMock do
   """
 
   import Plug.Conn
+
   require Logger
 
   @doc """
@@ -33,7 +34,7 @@ defmodule MockProvider.SendGridMock do
 
   defp generate_message_id do
     timestamp = System.system_time(:millisecond)
-    random = :crypto.strong_rand_bytes(8) |> Base.encode16(case: :lower)
+    random = 8 |> :crypto.strong_rand_bytes() |> Base.encode16(case: :lower)
     "#{timestamp}.#{random}@sendgrid.net"
   end
 
@@ -58,7 +59,7 @@ defmodule MockProvider.SendGridMock do
     # SendGrid Message Activity API returns an array of events
     response = [
       %{
-        "sg_event_id" => "SG" <> (:crypto.strong_rand_bytes(8) |> Base.encode16(case: :lower)),
+        "sg_event_id" => "SG" <> (8 |> :crypto.strong_rand_bytes() |> Base.encode16(case: :lower)),
         "event" => "delivered",
         "email" => "test@example.com",
         "timestamp" => System.system_time(:second),
@@ -68,7 +69,7 @@ defmodule MockProvider.SendGridMock do
         "attempt" => "1"
       },
       %{
-        "sg_event_id" => "SG" <> (:crypto.strong_rand_bytes(8) |> Base.encode16(case: :lower)),
+        "sg_event_id" => "SG" <> (8 |> :crypto.strong_rand_bytes() |> Base.encode16(case: :lower)),
         "event" => "processed",
         "email" => "test@example.com",
         "timestamp" => System.system_time(:second) - 10,

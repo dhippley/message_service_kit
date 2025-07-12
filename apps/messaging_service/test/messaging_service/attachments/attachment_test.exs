@@ -66,9 +66,7 @@ defmodule MessagingService.AttachmentTest do
       changeset = Attachment.url_changeset(%Attachment{}, attrs)
       refute changeset.valid?
 
-      assert "must be one of: image, document, video, audio, archive, text, other" in errors_on(
-               changeset
-             ).attachment_type
+      assert "must be one of: image, document, video, audio, archive, text, other" in errors_on(changeset).attachment_type
     end
 
     test "invalid URL format" do

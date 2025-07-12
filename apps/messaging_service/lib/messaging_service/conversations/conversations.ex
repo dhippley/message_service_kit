@@ -7,9 +7,10 @@ defmodule MessagingService.Conversations do
   """
 
   import Ecto.Query, warn: false
-  alias MessagingService.Repo
+
   alias MessagingService.Conversation
   alias MessagingService.Message
+  alias MessagingService.Repo
 
   @doc """
   Returns the list of conversations.
@@ -150,7 +151,8 @@ defmodule MessagingService.Conversations do
 
   """
   def create_conversation(attrs \\ %{}) do
-    Conversation.new_changeset(attrs)
+    attrs
+    |> Conversation.new_changeset()
     |> Repo.insert()
   end
 

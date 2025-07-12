@@ -9,6 +9,7 @@ defmodule MessagingService.Providers.TwilioProvider do
   @behaviour MessagingService.Provider
 
   alias MessagingService.Provider
+
   require Logger
 
   @base_url "http://localhost:4001/v1"
@@ -36,8 +37,7 @@ defmodule MessagingService.Providers.TwilioProvider do
     required_keys = [:account_sid, :auth_token, :from_number]
 
     missing_keys =
-      required_keys
-      |> Enum.filter(fn key -> not Map.has_key?(config, key) end)
+      Enum.filter(required_keys, fn key -> not Map.has_key?(config, key) end)
 
     if missing_keys == [] do
       validate_twilio_credentials(config)
@@ -102,9 +102,8 @@ defmodule MessagingService.Providers.TwilioProvider do
     supported_types = ["image/jpeg", "image/png", "image/gif", "image/webp"]
 
     invalid_attachments =
-      attachments
-      |> Enum.filter(fn attachment ->
-        not (attachment[:content_type] in supported_types)
+      Enum.filter(attachments, fn attachment ->
+        attachment[:content_type] not in supported_types
       end)
 
     if invalid_attachments == [] do
@@ -210,11 +209,12 @@ defmodule MessagingService.Providers.TwilioProvider do
     # Add media URLs for MMS
     params =
       if message[:attachments] && length(message.attachments) > 0 do
-        media_urls = Enum.map(message.attachments, fn attachment ->
-          # In a real implementation, you'd upload the attachment to a publicly accessible URL
-          # For now, we'll use a placeholder
-          "https://example.com/media/#{attachment.filename}"
-        end)
+        media_urls =
+          Enum.map(message.attachments, fn attachment ->
+            # In a real implementation, you'd upload the attachment to a publicly accessible URL
+            # For now, we'll use a placeholder
+            "https://example.com/media/#{attachment.filename}"
+          end)
 
         Map.put(params, "MediaUrl", Enum.join(media_urls, ","))
       else

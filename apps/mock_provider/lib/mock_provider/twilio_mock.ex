@@ -4,6 +4,7 @@ defmodule MockProvider.TwilioMock do
   """
 
   import Plug.Conn
+
   require Logger
 
   @doc """
@@ -22,9 +23,9 @@ defmodule MockProvider.TwilioMock do
       account_sid: conn.path_params["account_sid"] || "AC" <> generate_sid(),
       api_version: "2010-04-01",
       body: params["Body"] || "",
-      date_created: DateTime.utc_now() |> DateTime.to_iso8601(),
+      date_created: DateTime.to_iso8601(DateTime.utc_now()),
       date_sent: nil,
-      date_updated: DateTime.utc_now() |> DateTime.to_iso8601(),
+      date_updated: DateTime.to_iso8601(DateTime.utc_now()),
       direction: "outbound-api",
       error_code: nil,
       error_message: nil,
@@ -37,8 +38,7 @@ defmodule MockProvider.TwilioMock do
       sid: sid,
       status: "queued",
       subresource_uris: %{
-        media:
-          "/2010-04-01/Accounts/#{conn.path_params["account_sid"]}/Messages/#{sid}/Media.json"
+        media: "/2010-04-01/Accounts/#{conn.path_params["account_sid"]}/Messages/#{sid}/Media.json"
       },
       to: params["To"] || "",
       uri: "/2010-04-01/Accounts/#{conn.path_params["account_sid"]}/Messages/#{sid}.json"
@@ -67,7 +67,7 @@ defmodule MockProvider.TwilioMock do
       body: "Hello from mock Twilio",
       date_created: DateTime.utc_now() |> DateTime.add(-300) |> DateTime.to_iso8601(),
       date_sent: DateTime.utc_now() |> DateTime.add(-200) |> DateTime.to_iso8601(),
-      date_updated: DateTime.utc_now() |> DateTime.to_iso8601(),
+      date_updated: DateTime.to_iso8601(DateTime.utc_now()),
       direction: "outbound-api",
       error_code: nil,
       error_message: nil,

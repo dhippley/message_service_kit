@@ -19,15 +19,14 @@ defmodule MessagingServiceWeb.ConnCase do
 
   using do
     quote do
+      use MessagingServiceWeb, :verified_routes
+      import MessagingServiceWeb.ConnCase
+      import Phoenix.ConnTest
+      import Plug.Conn
       # The default endpoint for testing
       @endpoint MessagingServiceWeb.Endpoint
 
-      use MessagingServiceWeb, :verified_routes
-
       # Import conveniences for testing with connections
-      import Plug.Conn
-      import Phoenix.ConnTest
-      import MessagingServiceWeb.ConnCase
     end
   end
 

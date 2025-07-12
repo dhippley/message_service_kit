@@ -9,6 +9,7 @@ defmodule MessagingService.Providers.SendGridProvider do
   @behaviour MessagingService.Provider
 
   alias MessagingService.Provider
+
   require Logger
 
   @base_url "http://localhost:4001/v3"
@@ -36,8 +37,7 @@ defmodule MessagingService.Providers.SendGridProvider do
     required_keys = [:api_key, :from_email, :from_name]
 
     missing_keys =
-      required_keys
-      |> Enum.filter(fn key -> not Map.has_key?(config, key) end)
+      Enum.filter(required_keys, fn key -> not Map.has_key?(config, key) end)
 
     if missing_keys == [] do
       validate_sendgrid_credentials(config)
@@ -88,9 +88,10 @@ defmodule MessagingService.Providers.SendGridProvider do
 
   defp validate_email_attachments(attachments) do
     # Check attachment sizes (SendGrid has a 30MB limit for all attachments combined)
-    total_size = Enum.reduce(attachments, 0, fn attachment, acc ->
-      acc + byte_size(attachment[:data] || "")
-    end)
+    total_size =
+      Enum.reduce(attachments, 0, fn attachment, acc ->
+        acc + byte_size(attachment[:data] || "")
+      end)
 
     cond do
       total_size > 30 * 1024 * 1024 ->
@@ -211,13 +212,14 @@ defmodule MessagingService.Providers.SendGridProvider do
     # Add attachments if present
     email_data =
       if message[:attachments] && length(message.attachments) > 0 do
-        attachments = Enum.map(message.attachments, fn attachment ->
-          %{
-            content: Base.encode64(attachment[:data] || ""),
-            filename: attachment[:filename] || "attachment",
-            type: attachment[:content_type] || "application/octet-stream"
-          }
-        end)
+        attachments =
+          Enum.map(message.attachments, fn attachment ->
+            %{
+              content: Base.encode64(attachment[:data] || ""),
+              filename: attachment[:filename] || "attachment",
+              type: attachment[:content_type] || "application/octet-stream"
+            }
+          end)
 
         Map.put(email_data, :attachments, attachments)
       else
@@ -237,7 +239,7 @@ defmodule MessagingService.Providers.SendGridProvider do
 
   defp generate_message_id do
     # Generate a unique message ID for tracking
-    "SG" <> (:crypto.strong_rand_bytes(16) |> Base.encode16(case: :lower))
+    "SG" <> (16 |> :crypto.strong_rand_bytes() |> Base.encode16(case: :lower))
   end
 
   defp make_http_request(method, url, headers, body) do

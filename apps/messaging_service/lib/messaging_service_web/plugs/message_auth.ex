@@ -9,8 +9,8 @@ defmodule MessagingServiceWeb.Plugs.MessageAuth do
   - Custom webhook signature verification
   """
 
-  import Plug.Conn
   import Phoenix.Controller, only: [json: 2]
+  import Plug.Conn
 
   def init(opts), do: opts
 
@@ -31,8 +31,6 @@ defmodule MessagingServiceWeb.Plugs.MessageAuth do
     with {:ok, auth_header} <- get_auth_header(conn),
          {:ok, _credentials} <- validate_auth_header(auth_header) do
       :ok
-    else
-      {:error, reason} -> {:error, reason}
     end
   end
 
@@ -103,18 +101,21 @@ defmodule MessagingServiceWeb.Plugs.MessageAuth do
 
   # Configuration functions - these should be moved to application config
   defp get_valid_tokens do
-    Application.get_env(:messaging_service, :webhook_auth, [])
+    :messaging_service
+    |> Application.get_env(:webhook_auth, [])
     |> Keyword.get(:bearer_tokens, ["test-token-123", "webhook-token-456"])
   end
 
   defp get_valid_api_keys do
-    Application.get_env(:messaging_service, :webhook_auth, [])
+    :messaging_service
+    |> Application.get_env(:webhook_auth, [])
     |> Keyword.get(:api_keys, ["api-key-123", "webhook-key-456"])
   end
 
   defp valid_basic_credentials?(username, password) do
     valid_credentials =
-      Application.get_env(:messaging_service, :webhook_auth, [])
+      :messaging_service
+      |> Application.get_env(:webhook_auth, [])
       |> Keyword.get(:basic_auth, [{"webhook", "secret123"}])
 
     {username, password} in valid_credentials

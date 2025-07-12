@@ -1,8 +1,8 @@
 defmodule MessagingService.AttachmentsTest do
   use MessagingService.DataCase
 
-  alias MessagingService.Attachments
   alias MessagingService.Attachment
+  alias MessagingService.Attachments
 
   describe "attachments" do
     @valid_url_attrs %{

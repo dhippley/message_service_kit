@@ -7,9 +7,10 @@ defmodule MessagingServiceWeb.MessageController do
   """
 
   use MessagingServiceWeb, :controller
-  require Logger
 
   alias MessagingService.Messages
+
+  require Logger
 
   @doc """
   Sends an SMS or MMS message.
@@ -50,7 +51,7 @@ defmodule MessagingServiceWeb.MessageController do
 
       {:error, reason} ->
         Logger.error("Failed to send SMS: #{inspect(reason)}")
-        
+
         conn
         |> put_status(:internal_server_error)
         |> json(%{
@@ -98,7 +99,7 @@ defmodule MessagingServiceWeb.MessageController do
 
       {:error, reason} ->
         Logger.error("Failed to send email: #{inspect(reason)}")
-        
+
         conn
         |> put_status(:internal_server_error)
         |> json(%{
@@ -112,12 +113,10 @@ defmodule MessagingServiceWeb.MessageController do
 
   defp create_and_send_message(params, default_type) do
     message_params = normalize_message_params(params, default_type)
-    
+
     with {:ok, message} <- create_message_by_type(message_params),
          {:ok, _result} <- send_to_provider(message) do
       {:ok, message}
-    else
-      {:error, reason} -> {:error, reason}
     end
   end
 
@@ -135,12 +134,14 @@ defmodule MessagingServiceWeb.MessageController do
   end
 
   defp normalize_attachments(nil), do: []
+
   defp normalize_attachments(attachments) when is_list(attachments) do
-    Enum.map(attachments, fn 
+    Enum.map(attachments, fn
       url when is_binary(url) -> %{url: url, filename: nil, content_type: nil}
       attachment when is_map(attachment) -> attachment
     end)
   end
+
   defp normalize_attachments(_), do: []
 
   defp create_message_by_type(%{type: "sms"} = attrs) do
@@ -167,12 +168,14 @@ defmodule MessagingServiceWeb.MessageController do
   end
 
   defp parse_timestamp(nil), do: nil
+
   defp parse_timestamp(timestamp_str) when is_binary(timestamp_str) do
     case DateTime.from_iso8601(timestamp_str) do
       {:ok, datetime, _offset} -> datetime
       {:error, _reason} -> nil
     end
   end
+
   defp parse_timestamp(_), do: nil
 
   defp format_changeset_errors(changeset) do

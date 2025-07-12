@@ -1,8 +1,9 @@
 defmodule MessagingService.ConversationsTest do
   use MessagingService.DataCase, async: true
 
-  alias MessagingService.Conversations
+  alias Ecto.Association.NotLoaded
   alias MessagingService.Conversation
+  alias MessagingService.Conversations
   alias MessagingService.Messages
 
   @valid_attrs %{
@@ -68,7 +69,7 @@ defmodule MessagingService.ConversationsTest do
 
       assert length(conversations) == 1
       conversation = List.first(conversations)
-      assert %Ecto.Association.NotLoaded{} != conversation.messages
+      assert %NotLoaded{} != conversation.messages
     end
   end
 
@@ -102,7 +103,7 @@ defmodule MessagingService.ConversationsTest do
       result = Conversations.get_conversation_with_messages!(conversation.id)
 
       assert result.id == conversation.id
-      assert %Ecto.Association.NotLoaded{} != result.messages
+      assert %NotLoaded{} != result.messages
     end
 
     test "raises when conversation does not exist" do
@@ -304,7 +305,7 @@ defmodule MessagingService.ConversationsTest do
     test "returns conversations with recent activity" do
       # Create conversation with recent activity
       recent_conversation = conversation_fixture()
-      recent_timestamp = NaiveDateTime.utc_now() |> NaiveDateTime.add(-1, :day)
+      recent_timestamp = NaiveDateTime.add(NaiveDateTime.utc_now(), -1, :day)
 
       {:ok, _} =
         Conversations.update_conversation_last_message(recent_conversation, recent_timestamp)
@@ -316,7 +317,7 @@ defmodule MessagingService.ConversationsTest do
           participant_two: "old2@example.com"
         })
 
-      old_timestamp = NaiveDateTime.utc_now() |> NaiveDateTime.add(-40, :day)
+      old_timestamp = NaiveDateTime.add(NaiveDateTime.utc_now(), -40, :day)
       {:ok, _} = Conversations.update_conversation_last_message(old_conversation, old_timestamp)
 
       # Last 30 days
@@ -395,7 +396,7 @@ defmodule MessagingService.ConversationsTest do
     test "returns count of old conversations" do
       # Create a conversation with old activity
       old_conversation = conversation_fixture()
-      old_timestamp = NaiveDateTime.utc_now() |> NaiveDateTime.add(-100, :day)
+      old_timestamp = NaiveDateTime.add(NaiveDateTime.utc_now(), -100, :day)
       {:ok, _} = Conversations.update_conversation_last_message(old_conversation, old_timestamp)
 
       # Create a conversation with recent activity
@@ -405,7 +406,7 @@ defmodule MessagingService.ConversationsTest do
           participant_two: "recent2@example.com"
         })
 
-      recent_timestamp = NaiveDateTime.utc_now() |> NaiveDateTime.add(-10, :day)
+      recent_timestamp = NaiveDateTime.add(NaiveDateTime.utc_now(), -10, :day)
 
       {:ok, _} =
         Conversations.update_conversation_last_message(recent_conversation, recent_timestamp)

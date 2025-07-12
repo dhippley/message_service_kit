@@ -8,9 +8,10 @@ defmodule MessagingServiceWeb.WebhookController do
   """
 
   use MessagingServiceWeb, :controller
-  require Logger
 
   alias MessagingService.Messages
+
+  require Logger
 
   # Apply authentication to all webhook endpoints except health check
   plug MessagingServiceWeb.Plugs.MessageAuth when action not in [:health_check]
@@ -171,12 +172,7 @@ defmodule MessagingServiceWeb.WebhookController do
   Health check endpoint for webhook availability.
   """
   def health_check(conn, _params) do
-    conn
-    |> json(%{
-      status: "healthy",
-      service: "messaging_service_webhook",
-      timestamp: DateTime.utc_now()
-    })
+    json(conn, %{status: "healthy", service: "messaging_service_webhook", timestamp: DateTime.utc_now()})
   end
 
   # Private helper functions
@@ -250,7 +246,7 @@ defmodule MessagingServiceWeb.WebhookController do
       size: nil
     }
     |> Enum.reject(fn {_k, v} -> is_nil(v) end)
-    |> Enum.into(%{})
+    |> Map.new()
   end
 
   defp normalize_attachment_params(attachment) when is_map(attachment) do
@@ -263,7 +259,7 @@ defmodule MessagingServiceWeb.WebhookController do
       size: get_param(attachment, "size")
     }
     |> Enum.reject(fn {_k, v} -> is_nil(v) end)
-    |> Enum.into(%{})
+    |> Map.new()
   end
 
   defp create_message_by_type(%{type: "sms"} = attrs) do
@@ -380,10 +376,11 @@ defmodule MessagingServiceWeb.WebhookController do
     Logger.info("Received inbound email webhook: #{inspect(params)}")
 
     # Normalize email-specific params
-    normalized_params = params
-    |> Map.put("type", "email")
-    |> Map.put("provider_id", params["xillio_id"] || params["provider_id"] || params["messaging_provider_id"])
-    |> Map.put("subject", params["subject"] || "")
+    normalized_params =
+      params
+      |> Map.put("type", "email")
+      |> Map.put("provider_id", params["xillio_id"] || params["provider_id"] || params["messaging_provider_id"])
+      |> Map.put("subject", params["subject"] || "")
 
     case process_incoming_message(normalized_params) do
       {:ok, message} ->
@@ -497,7 +494,7 @@ defmodule MessagingServiceWeb.WebhookController do
       "to" => params["To"],
       "body" => params["Body"] || "",
       "provider_id" => params["MessageSid"] || params["SmsSid"],
-      "timestamp" => DateTime.utc_now() |> DateTime.to_iso8601()
+      "timestamp" => DateTime.to_iso8601(DateTime.utc_now())
     }
 
     case process_incoming_message(normalized_params) do
@@ -565,8 +562,8 @@ defmodule MessagingServiceWeb.WebhookController do
       "to" => params["to"],
       "subject" => params["subject"] || "",
       "body" => params["html"] || params["text"] || "",
-      "provider_id" => "sendgrid_" <> (:crypto.strong_rand_bytes(8) |> Base.encode16(case: :lower)),
-      "timestamp" => DateTime.utc_now() |> DateTime.to_iso8601()
+      "provider_id" => "sendgrid_" <> (8 |> :crypto.strong_rand_bytes() |> Base.encode16(case: :lower)),
+      "timestamp" => DateTime.to_iso8601(DateTime.utc_now())
     }
 
     case process_incoming_message(normalized_params) do

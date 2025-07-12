@@ -67,20 +67,22 @@ defmodule MessagingService.Providers.ProviderTest do
       assert {:error, _} = Provider.validate_message_request(%{type: :sms})
 
       # Invalid recipients
-      assert {:error, _} = Provider.validate_message_request(%{
-        type: :sms,
-        to: "invalid",
-        from: "+1234567890",
-        body: "Hello"
-      })
+      assert {:error, _} =
+               Provider.validate_message_request(%{
+                 type: :sms,
+                 to: "invalid",
+                 from: "+1234567890",
+                 body: "Hello"
+               })
 
       # Invalid content
-      assert {:error, _} = Provider.validate_message_request(%{
-        type: :sms,
-        to: "+1234567890",
-        from: "+0987654321",
-        body: ""
-      })
+      assert {:error, _} =
+               Provider.validate_message_request(%{
+                 type: :sms,
+                 to: "+1234567890",
+                 from: "+0987654321",
+                 body: ""
+               })
     end
   end
 end

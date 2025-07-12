@@ -1,8 +1,9 @@
 defmodule MessagingService.MessagesIntegrationTest do
   use MessagingService.DataCase
 
-  alias MessagingService.{Messages, Conversations}
+  alias MessagingService.Conversations
   alias MessagingService.Message
+  alias MessagingService.Messages
 
   describe "conversation integration" do
     test "create_sms_message creates a conversation when none exists" do

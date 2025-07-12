@@ -7,9 +7,11 @@ defmodule MessagingService.Messages do
   """
 
   import Ecto.Query, warn: false
-  alias MessagingService.Repo
-  alias MessagingService.Message
+
   alias MessagingService.Conversations
+  alias MessagingService.Message
+  alias MessagingService.Repo
+
   require Logger
 
   @doc """
@@ -110,12 +112,10 @@ defmodule MessagingService.Messages do
   """
   def create_sms_message_with_conversation(attrs \\ %{}) do
     with {:ok, conversation} <- find_or_create_conversation_for_message(attrs),
-         message_attrs <- Map.put(attrs, :conversation_id, conversation.id),
+         message_attrs = Map.put(attrs, :conversation_id, conversation.id),
          {:ok, message} <- create_sms_message_without_conversation(message_attrs),
          {:ok, _conversation} <- update_conversation_for_new_message(conversation, message) do
       {:ok, message}
-    else
-      {:error, reason} -> {:error, reason}
     end
   end
 
@@ -175,12 +175,10 @@ defmodule MessagingService.Messages do
   """
   def create_mms_message_with_conversation(attrs \\ %{}) do
     with {:ok, conversation} <- find_or_create_conversation_for_message(attrs),
-         message_attrs <- Map.put(attrs, :conversation_id, conversation.id),
+         message_attrs = Map.put(attrs, :conversation_id, conversation.id),
          {:ok, message} <- create_mms_message_without_conversation(message_attrs),
          {:ok, _conversation} <- update_conversation_for_new_message(conversation, message) do
       {:ok, message}
-    else
-      {:error, reason} -> {:error, reason}
     end
   end
 
@@ -240,12 +238,10 @@ defmodule MessagingService.Messages do
   """
   def create_email_message_with_conversation(attrs \\ %{}) do
     with {:ok, conversation} <- find_or_create_conversation_for_message(attrs),
-         message_attrs <- Map.put(attrs, :conversation_id, conversation.id),
+         message_attrs = Map.put(attrs, :conversation_id, conversation.id),
          {:ok, message} <- create_email_message_without_conversation(message_attrs),
          {:ok, _conversation} <- update_conversation_for_new_message(conversation, message) do
       {:ok, message}
-    else
-      {:error, reason} -> {:error, reason}
     end
   end
 
@@ -282,8 +278,7 @@ defmodule MessagingService.Messages do
       {:error, %Ecto.Changeset{}}
 
   """
-  def create_message_with_attachments(message_attrs, attachment_attrs_list)
-      when is_list(attachment_attrs_list) do
+  def create_message_with_attachments(message_attrs, attachment_attrs_list) when is_list(attachment_attrs_list) do
     message_type = message_attrs[:type] || message_attrs["type"]
 
     Repo.transaction(fn ->
@@ -380,8 +375,7 @@ defmodule MessagingService.Messages do
 
   """
   def list_messages_by_type(type) do
-    from(m in Message, where: m.type == ^type, order_by: [desc: m.timestamp])
-    |> Repo.all()
+    Repo.all(from(m in Message, where: m.type == ^type, order_by: [desc: m.timestamp]))
   end
 
   @doc """
@@ -394,14 +388,13 @@ defmodule MessagingService.Messages do
 
   """
   def list_conversation_messages(contact1, contact2) do
-    from(m in Message,
-      where:
-        (m.from == ^contact1 and m.to == ^contact2) or
-          (m.from == ^contact2 and m.to == ^contact1),
-      order_by: [asc: m.timestamp],
-      preload: :attachments
+    Repo.all(
+      from(m in Message,
+        where: (m.from == ^contact1 and m.to == ^contact2) or (m.from == ^contact2 and m.to == ^contact1),
+        order_by: [asc: m.timestamp],
+        preload: :attachments
+      )
     )
-    |> Repo.all()
   end
 
   @doc """
@@ -414,8 +407,7 @@ defmodule MessagingService.Messages do
 
   """
   def list_messages_from(from_contact) do
-    from(m in Message, where: m.from == ^from_contact, order_by: [desc: m.timestamp])
-    |> Repo.all()
+    Repo.all(from(m in Message, where: m.from == ^from_contact, order_by: [desc: m.timestamp]))
   end
 
   @doc """
@@ -428,8 +420,7 @@ defmodule MessagingService.Messages do
 
   """
   def list_messages_to(to_contact) do
-    from(m in Message, where: m.to == ^to_contact, order_by: [desc: m.timestamp])
-    |> Repo.all()
+    Repo.all(from(m in Message, where: m.to == ^to_contact, order_by: [desc: m.timestamp]))
   end
 
   @doc """
@@ -445,14 +436,13 @@ defmodule MessagingService.Messages do
 
   """
   def get_latest_conversation_message(contact1, contact2) do
-    from(m in Message,
-      where:
-        (m.from == ^contact1 and m.to == ^contact2) or
-          (m.from == ^contact2 and m.to == ^contact1),
-      order_by: [desc: m.timestamp],
-      limit: 1
+    Repo.one(
+      from(m in Message,
+        where: (m.from == ^contact1 and m.to == ^contact2) or (m.from == ^contact2 and m.to == ^contact1),
+        order_by: [desc: m.timestamp],
+        limit: 1
+      )
     )
-    |> Repo.one()
   end
 
   @doc """
@@ -506,12 +496,9 @@ defmodule MessagingService.Messages do
   def search_messages(search_term) when is_binary(search_term) do
     search_pattern = "%#{search_term}%"
 
-    from(m in Message,
-      where: ilike(m.body, ^search_pattern),
-      order_by: [desc: m.timestamp],
-      preload: :attachments
+    Repo.all(
+      from(m in Message, where: ilike(m.body, ^search_pattern), order_by: [desc: m.timestamp], preload: :attachments)
     )
-    |> Repo.all()
   end
 
   @doc """
@@ -529,7 +516,7 @@ defmodule MessagingService.Messages do
       select: {m.type, count(m.id)}
     )
     |> Repo.all()
-    |> Enum.into(%{})
+    |> Map.new()
   end
 
   @doc """
@@ -542,12 +529,7 @@ defmodule MessagingService.Messages do
 
   """
   def list_messages_with_attachments do
-    from(m in Message,
-      join: a in assoc(m, :attachments),
-      preload: :attachments,
-      order_by: [desc: m.timestamp]
-    )
-    |> Repo.all()
+    Repo.all(from(m in Message, join: a in assoc(m, :attachments), preload: :attachments, order_by: [desc: m.timestamp]))
   end
 
   @doc """
@@ -748,6 +730,7 @@ defmodule MessagingService.Messages do
   """
   def list_messaging_providers do
     alias MessagingService.Providers.ProviderManager
+
     ProviderManager.list_providers()
   end
 
@@ -763,6 +746,7 @@ defmodule MessagingService.Messages do
   """
   def validate_provider_configurations(provider_configs) do
     alias MessagingService.Providers.ProviderManager
+
     ProviderManager.validate_configurations(provider_configs)
   end
 
@@ -780,6 +764,7 @@ defmodule MessagingService.Messages do
 
   defp validate_outbound_message(message_request) do
     alias MessagingService.Provider
+
     Provider.validate_message_request(message_request)
   end
 
@@ -816,12 +801,13 @@ defmodule MessagingService.Messages do
     if config do
       # Convert keyword list to map if necessary
       if is_list(config) and Keyword.keyword?(config) do
-        Enum.into(config, %{})
+        Map.new(config)
       else
         config
       end
     else
       alias MessagingService.Providers.ProviderManager
+
       env = Application.get_env(:messaging_service, :environment, :dev)
       ProviderManager.default_configurations(env)
     end
@@ -829,23 +815,18 @@ defmodule MessagingService.Messages do
 
   # Private helper functions
 
-  defp create_message_by_type_with_conversation("sms", attrs),
-    do: create_sms_message_with_conversation(attrs)
+  defp create_message_by_type_with_conversation("sms", attrs), do: create_sms_message_with_conversation(attrs)
 
-  defp create_message_by_type_with_conversation("mms", attrs),
-    do: create_mms_message_with_conversation(attrs)
+  defp create_message_by_type_with_conversation("mms", attrs), do: create_mms_message_with_conversation(attrs)
 
-  defp create_message_by_type_with_conversation("email", attrs),
-    do: create_email_message_with_conversation(attrs)
+  defp create_message_by_type_with_conversation("email", attrs), do: create_email_message_with_conversation(attrs)
 
-  defp create_message_by_type_with_conversation(_, attrs),
-    do: {:error, Message.changeset(%Message{}, attrs)}
+  defp create_message_by_type_with_conversation(_, attrs), do: {:error, Message.changeset(%Message{}, attrs)}
 
   defp create_message_by_type("sms", attrs), do: create_sms_message_without_conversation(attrs)
   defp create_message_by_type("mms", attrs), do: create_mms_message_without_conversation(attrs)
 
-  defp create_message_by_type("email", attrs),
-    do: create_email_message_without_conversation(attrs)
+  defp create_message_by_type("email", attrs), do: create_email_message_without_conversation(attrs)
 
   defp create_message_by_type(_, attrs), do: {:error, Message.changeset(%Message{}, attrs)}
 

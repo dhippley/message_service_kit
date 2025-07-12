@@ -41,25 +41,28 @@ defmodule MessagingService.Providers.TwilioProviderTest do
       assert {:error, _} = TwilioProvider.validate_config(%{})
 
       # Invalid account_sid
-      assert {:error, _} = TwilioProvider.validate_config(%{
-        account_sid: "invalid",
-        auth_token: "test_token_123456789012345678901234",
-        from_number: "+15551234567"
-      })
+      assert {:error, _} =
+               TwilioProvider.validate_config(%{
+                 account_sid: "invalid",
+                 auth_token: "test_token_123456789012345678901234",
+                 from_number: "+15551234567"
+               })
 
       # Invalid auth_token
-      assert {:error, _} = TwilioProvider.validate_config(%{
-        account_sid: "ACtest123",
-        auth_token: "short",
-        from_number: "+15551234567"
-      })
+      assert {:error, _} =
+               TwilioProvider.validate_config(%{
+                 account_sid: "ACtest123",
+                 auth_token: "short",
+                 from_number: "+15551234567"
+               })
 
       # Invalid from_number
-      assert {:error, _} = TwilioProvider.validate_config(%{
-        account_sid: "ACtest123",
-        auth_token: "test_token_123456789012345678901234",
-        from_number: "invalid"
-      })
+      assert {:error, _} =
+               TwilioProvider.validate_config(%{
+                 account_sid: "ACtest123",
+                 auth_token: "test_token_123456789012345678901234",
+                 from_number: "invalid"
+               })
     end
 
     test "send_message/2 with valid SMS" do

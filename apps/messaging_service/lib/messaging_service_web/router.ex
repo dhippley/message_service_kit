@@ -27,7 +27,7 @@ defmodule MessagingServiceWeb.Router do
     # Message sending endpoints
     post "/messages/sms", MessageController, :send_sms
     post "/messages/email", MessageController, :send_email
-    
+
     # Conversation endpoints
     get "/conversations", ConversationController, :index
     get "/conversations/:id/messages", ConversationController, :show_messages

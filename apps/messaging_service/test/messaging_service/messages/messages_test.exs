@@ -1,8 +1,9 @@
 defmodule MessagingService.MessagesTest do
   use MessagingService.DataCase, async: true
 
-  alias MessagingService.Messages
+  alias Ecto.Association.NotLoaded
   alias MessagingService.Message
+  alias MessagingService.Messages
 
   @valid_sms_attrs %{
     from: "+12345678901",
@@ -74,7 +75,7 @@ defmodule MessagingService.MessagesTest do
       result = Messages.get_message_with_attachments!(message.id)
 
       assert result.id == message.id
-      assert %Ecto.Association.NotLoaded{} != result.attachments
+      assert %NotLoaded{} != result.attachments
     end
 
     test "raises when message does not exist" do
@@ -283,8 +284,8 @@ defmodule MessagingService.MessagesTest do
   describe "list_messages_by_type/1" do
     test "returns messages of specified type ordered by timestamp desc" do
       sms_message = message_fixture(%{body: "SMS 1"})
-      _mms_message = Messages.create_mms_message(@valid_mms_attrs) |> elem(1)
-      sms_message_2 = Messages.create_sms_message(%{@valid_sms_attrs | body: "SMS 2"}) |> elem(1)
+      _mms_message = @valid_mms_attrs |> Messages.create_mms_message() |> elem(1)
+      sms_message_2 = %{@valid_sms_attrs | body: "SMS 2"} |> Messages.create_sms_message() |> elem(1)
 
       sms_messages = Messages.list_messages_by_type("sms")
 
@@ -323,7 +324,7 @@ defmodule MessagingService.MessagesTest do
 
       # All messages should have attachments preloaded
       Enum.each(conversation, fn msg ->
-        assert %Ecto.Association.NotLoaded{} != msg.attachments
+        assert %NotLoaded{} != msg.attachments
       end)
     end
 
@@ -452,7 +453,7 @@ defmodule MessagingService.MessagesTest do
 
       # Results should have attachments preloaded
       Enum.each(results, fn msg ->
-        assert %Ecto.Association.NotLoaded{} != msg.attachments
+        assert %NotLoaded{} != msg.attachments
       end)
     end
 
@@ -515,7 +516,7 @@ defmodule MessagingService.MessagesTest do
 
       assert length(results) == 1
       assert List.first(results).id == message_with_attachment.id
-      assert %Ecto.Association.NotLoaded{} != List.first(results).attachments
+      assert %NotLoaded{} != List.first(results).attachments
     end
 
     test "returns empty list when no messages have attachments" do

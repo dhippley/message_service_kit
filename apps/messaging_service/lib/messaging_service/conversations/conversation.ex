@@ -7,6 +7,7 @@ defmodule MessagingService.Conversation do
   """
 
   use Ecto.Schema
+
   import Ecto.Changeset
 
   alias MessagingService.Message
@@ -84,14 +85,10 @@ defmodule MessagingService.Conversation do
 
   """
   def update_last_message_changeset(conversation, message_timestamp) do
-    conversation
-    |> cast(
-      %{
-        last_message_at: message_timestamp,
-        message_count: (conversation.message_count || 0) + 1
-      },
-      [:last_message_at, :message_count]
-    )
+    cast(conversation, %{last_message_at: message_timestamp, message_count: (conversation.message_count || 0) + 1}, [
+      :last_message_at,
+      :message_count
+    ])
   end
 
   # Private helper functions
@@ -129,10 +126,9 @@ defmodule MessagingService.Conversation do
   end
 
   defp maybe_set_initial_timestamps(changeset) do
-    now = NaiveDateTime.utc_now() |> NaiveDateTime.truncate(:microsecond)
+    now = NaiveDateTime.truncate(NaiveDateTime.utc_now(), :microsecond)
 
-    changeset
-    |> put_change(:last_message_at, now)
+    put_change(changeset, :last_message_at, now)
   end
 
   @doc """
@@ -213,6 +209,6 @@ defmodule MessagingService.Conversation do
   def recent_activity?(%__MODULE__{last_message_at: nil}, _threshold), do: false
 
   def recent_activity?(%__MODULE__{last_message_at: last_message_at}, threshold) do
-    NaiveDateTime.compare(last_message_at, threshold) == :gt
+    NaiveDateTime.after?(last_message_at, threshold)
   end
 end

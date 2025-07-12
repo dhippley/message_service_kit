@@ -39,18 +39,20 @@ defmodule MessagingService.Providers.SendGridProviderTest do
       assert {:error, _} = SendGridProvider.validate_config(%{})
 
       # Invalid api_key
-      assert {:error, _} = SendGridProvider.validate_config(%{
-        api_key: "invalid",
-        from_email: "test@example.com",
-        from_name: "Test Service"
-      })
+      assert {:error, _} =
+               SendGridProvider.validate_config(%{
+                 api_key: "invalid",
+                 from_email: "test@example.com",
+                 from_name: "Test Service"
+               })
 
       # Invalid from_email
-      assert {:error, _} = SendGridProvider.validate_config(%{
-        api_key: "SG.test_key_123456789012345678901234567890",
-        from_email: "invalid",
-        from_name: "Test Service"
-      })
+      assert {:error, _} =
+               SendGridProvider.validate_config(%{
+                 api_key: "SG.test_key_123456789012345678901234567890",
+                 from_email: "invalid",
+                 from_name: "Test Service"
+               })
     end
 
     test "send_message/2 with valid email" do
