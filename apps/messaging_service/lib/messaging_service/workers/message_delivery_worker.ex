@@ -125,9 +125,14 @@ defmodule MessagingService.Workers.MessageDeliveryWorker do
   end
 
   defp extract_attachment_urls(_message) do
-    # This would typically preload and extract attachment URLs
-    # For now, return empty list as attachments aren't preloaded
-    []
+    # Return default image instead of empty list
+    # This would typically preload and extract attachment URLs from the message
+    default_image_path = "apps/messaging_service/priv/static/images/default.gif"
+    [%{
+      url: default_image_path,
+      content_type: "image/gif",
+      filename: "default.gif"
+    }]
   end
 
   defp update_message_with_provider_info(message, provider_message_id, provider_name) do
