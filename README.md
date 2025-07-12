@@ -23,6 +23,35 @@ cd apps/mock_provider && mix run --no-halt
 cd apps/messaging_service && mix phx.server
 ```
 
+## Using the Makefile
+
+This project includes a Makefile with convenient commands for common development tasks:
+
+```bash
+# Show all available commands
+make help
+
+# Set up the project (starts database and waits for it to be ready)
+make setup
+
+# Start the application
+make run
+
+# Run tests scripts
+make test
+
+# Database management
+make db-up      # Start PostgreSQL database
+make db-down    # Stop PostgreSQL database  
+make db-logs    # Show database logs
+make db-shell   # Connect to database shell
+
+# Clean up (stop containers and remove temporary files)
+make clean
+```
+
+**Note**: The Makefile uses Docker Compose to manage the PostgreSQL database. Make sure Docker is installed and running on your system.
+
 ## Development
 
 ### Code Quality Tools
