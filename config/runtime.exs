@@ -30,12 +30,6 @@ if config_env() == :prod do
 
   maybe_ipv6 = if System.get_env("ECTO_IPV6") in ~w(true 1), do: [:inet6], else: []
 
-  config :messaging_service, MessagingService.Repo,
-    # ssl: true,
-    url: database_url,
-    pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10"),
-    socket_options: maybe_ipv6
-
   # The secret key base is used to sign/encrypt cookies and other secrets.
   # A default value is used in config/dev.exs and config/test.exs but you
   # want to use a different value for prod and you most likely don't want
@@ -51,7 +45,11 @@ if config_env() == :prod do
   host = System.get_env("PHX_HOST") || "example.com"
   port = String.to_integer(System.get_env("PORT") || "4000")
 
-  config :messaging_service, :dns_cluster_query, System.get_env("DNS_CLUSTER_QUERY")
+  config :messaging_service, MessagingService.Repo,
+    # ssl: true,
+    url: database_url,
+    pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10"),
+    socket_options: maybe_ipv6
 
   config :messaging_service, MessagingServiceWeb.Endpoint,
     url: [host: host, port: 443, scheme: "https"],
@@ -65,13 +63,15 @@ if config_env() == :prod do
     ],
     secret_key_base: secret_key_base
 
-  config :messaging_service, :twilio, %{
-    account_sid: System.get_env("TWILIO_SID") || "ACtest12345678901234567890",
-    auth_token: System.get_env("TWILIO_TOKEN") || "test_token_12345"
-  }
+  config :messaging_service, :dns_cluster_query, System.get_env("DNS_CLUSTER_QUERY")
 
   config :messaging_service, :sendgrid, %{
     api_key: System.get_env("SENDGRID_KEY") || "SG.test_key_12345"
+  }
+
+  config :messaging_service, :twilio, %{
+    account_sid: System.get_env("TWILIO_SID") || "ACtest12345678901234567890",
+    auth_token: System.get_env("TWILIO_TOKEN") || "test_token_12345"
   }
 
   # ## SSL Support

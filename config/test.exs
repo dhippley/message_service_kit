@@ -1,7 +1,10 @@
 import Config
 
-# Set environment
-config :messaging_service, :env, :test
+# Print only warnings and errors during test
+config :logger, level: :warning
+
+# In test we don't send emails
+config :messaging_service, MessagingService.Mailer, adapter: Swoosh.Adapters.Test
 
 # Configure your database
 #
@@ -23,21 +26,19 @@ config :messaging_service, MessagingServiceWeb.Endpoint,
   secret_key_base: "z49t8pFuU3DCRpj4Y9BeKVy8b/i5Yy9/bPh0BbBUudoSJxt2RUqp4ilvnS05P05g",
   server: true
 
-# In test we don't send emails
-config :messaging_service, MessagingService.Mailer, adapter: Swoosh.Adapters.Test
+# Set environment
+config :messaging_service, :env, :test
 
-# Disable swoosh api client as it is only required for production adapters
-config :swoosh, :api_client, false
+# Configure the environment for provider manager
+config :messaging_service, :environment, :test
 
-# Print only warnings and errors during test
-config :logger, level: :warning
-
-# Initialize plugs at runtime for faster test compilation
-config :phoenix, :plug_init_mode, :runtime
-
-# Enable helpful, but potentially expensive runtime checks
-config :phoenix_live_view,
-  enable_expensive_runtime_checks: true
+# Configure messaging providers for test
+config :messaging_service, :provider_configs,
+  mock: %{
+    provider: :mock,
+    config: %{provider_name: :generic},
+    enabled: true
+  }
 
 # Configure webhook authentication for test
 config :messaging_service, :webhook_auth,
@@ -54,13 +55,12 @@ config :messaging_service, :webhook_auth,
     {"dev_webhook", "secret_dev_key"}
   ]
 
-# Configure messaging providers for test
-config :messaging_service, :provider_configs,
-  mock: %{
-    provider: :mock,
-    config: %{provider_name: :generic},
-    enabled: true
-  }
+# Initialize plugs at runtime for faster test compilation
+config :phoenix, :plug_init_mode, :runtime
 
-# Configure the environment for provider manager
-config :messaging_service, :environment, :test
+# Enable helpful, but potentially expensive runtime checks
+config :phoenix_live_view,
+  enable_expensive_runtime_checks: true
+
+# Disable swoosh api client as it is only required for production adapters
+config :swoosh, :api_client, false
