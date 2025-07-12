@@ -13,7 +13,16 @@ defmodule MessagingService.MixProject do
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),
-      deps: deps()
+      deps: deps(),
+      test_coverage: [tool: ExCoveralls],
+      preferred_cli_env: [
+        coveralls: :test,
+        "coveralls.detail": :test,
+        "coveralls.post": :test,
+        "coveralls.html": :test,
+        "coveralls.cobertura": :test,
+        "coveralls.lcov": :test
+      ]
     ]
   end
 
@@ -59,7 +68,8 @@ defmodule MessagingService.MixProject do
       {:bandit, "~> 1.5"},
       {:dialyxir, "~> 1.4", only: [:dev], runtime: false},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
-      {:styler, "~> 1.4", only: [:dev, :test], runtime: false}
+      {:styler, "~> 1.4", only: [:dev, :test], runtime: false},
+      {:excoveralls, "~> 0.18", only: :test}
     ]
   end
 
@@ -83,7 +93,9 @@ defmodule MessagingService.MixProject do
         "phx.digest"
       ],
       quality: ["format", "credo --strict", "dialyzer"],
-      "quality.ci": ["format --check-formatted", "credo --strict", "dialyzer"]
+      "quality.ci": ["format --check-formatted", "credo --strict", "dialyzer"],
+      "test.coverage": ["coveralls"],
+      "test.coverage.html": ["coveralls.html"]
     ]
   end
 end
