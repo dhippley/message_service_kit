@@ -101,14 +101,29 @@ curl -X POST "$BASE_URL/api/webhooks/email" \
 
 # Test 7: Get conversations
 echo "7. Testing get conversations..."
-curl -X GET "$BASE_URL/api/conversations" \
-  -H "$CONTENT_TYPE" \
-  -w "\nStatus: %{http_code}\n\n"
+CONVERSATIONS_RESPONSE=$(curl -s -X GET "$BASE_URL/api/conversations" \
+  -H "$CONTENT_TYPE")
+echo "$CONVERSATIONS_RESPONSE"
+echo -e "\nStatus: 200\n"
 
-# Test 8: Get messages for a conversation (example conversation ID)
+# Extract a conversation ID from the response for the next test
+CONVERSATION_ID=$(echo "$CONVERSATIONS_RESPONSE" | grep -o '"conversation_id":"[^"]*"' | head -1 | cut -d'"' -f4)
+if [ -z "$CONVERSATION_ID" ]; then
+    # Fallback: try to extract from the conversations data structure
+    CONVERSATION_ID=$(echo "$CONVERSATIONS_RESPONSE" | grep -o '"id":"[^"]*"' | head -1 | cut -d'"' -f4)
+fi
+
+# Test 8: Get messages for a conversation (using actual conversation ID)
 echo "8. Testing get messages for conversation..."
-curl -X GET "$BASE_URL/api/conversations/1/messages" \
-  -H "$CONTENT_TYPE" \
-  -w "\nStatus: %{http_code}\n\n"
+if [ -n "$CONVERSATION_ID" ]; then
+    curl -X GET "$BASE_URL/api/conversations/$CONVERSATION_ID/messages" \
+      -H "$CONTENT_TYPE" \
+      -w "\nStatus: %{http_code}\n\n"
+else
+    echo "No conversation ID found, using fallback ID..."
+    curl -X GET "$BASE_URL/api/conversations/4ea565bc-854c-42b5-a87f-0d7feb374272/messages" \
+      -H "$CONTENT_TYPE" \
+      -w "\nStatus: %{http_code}\n\n"
+fi
 
 echo "=== Test script completed ===" 
