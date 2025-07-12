@@ -559,13 +559,12 @@ defmodule MessagingService.Messages do
 
   This function handles the complete outbound message flow:
   1. Validates the message
-  2. Selects the appropriate provider
-  3. Sends the message
-  4. Stores the message in the database with provider information
+  2. Stores the message in the database
+  3. Enqueues a background job for delivery via the appropriate provider
 
   ## Parameters
   - `message_attrs` - Map containing message attributes
-  - `provider_configs` - Optional provider configurations (uses default if not provided)
+  - `opts` - Optional parameters for job scheduling (delay, scheduled_at, etc.)
 
   ## Examples
 
@@ -582,24 +581,22 @@ defmodule MessagingService.Messages do
       ...>   to: "user@example.com",
       ...>   from: "service@example.com",
       ...>   body: "Hello from MessagingService!"
-      ...> })
+      ...> }, %{delay: 60})
       {:ok, %Message{}}
 
   ## Returns
-  - `{:ok, message}` - Message sent and stored successfully
-  - `{:error, reason}` - Failed to send message
+  - `{:ok, message}` - Message stored and queued for delivery successfully
+  - `{:error, reason}` - Failed to store message or enqueue job
   """
-  def send_outbound_message(message_attrs, provider_configs \\ nil) do
-    alias MessagingService.Providers.ProviderManager
+  def send_outbound_message(message_attrs, opts \\ []) do
+    alias MessagingService.Workers.MessageDeliveryWorker
 
-    provider_configs = provider_configs || get_default_provider_configs()
-
-    # Create message request for provider
+    # Validate the message request
     message_request = build_message_request(message_attrs)
 
     with :ok <- validate_outbound_message(message_request),
-         {:ok, message_id, provider_name} <- ProviderManager.send_message(message_request, provider_configs),
-         {:ok, message} <- store_outbound_message(message_attrs, message_id, provider_name) do
+         {:ok, message} <- store_message_for_delivery(message_attrs),
+         {:ok, _job} <- MessageDeliveryWorker.enqueue_delivery(message.id, opts) do
       {:ok, message}
     else
       {:error, reason} = error ->
@@ -769,18 +766,18 @@ defmodule MessagingService.Messages do
     Provider.validate_message_request(message_request)
   end
 
-  defp store_outbound_message(message_attrs, provider_message_id, provider_name) do
-    # Store the message in our database with provider information
-    attrs_with_provider =
+  defp store_message_for_delivery(message_attrs) do
+    # Store the message in our database with pending status
+    attrs_with_status =
       message_attrs
-      |> Map.put(:messaging_provider_id, provider_message_id)
-      |> Map.put(:timestamp, NaiveDateTime.utc_now())
-      |> Map.put(:provider_name, Atom.to_string(provider_name))
+      |> Map.put(:status, "queued")
+      |> Map.put(:direction, "outbound")
+      |> Map.put(:queued_at, NaiveDateTime.utc_now())
 
     case message_attrs[:type] || message_attrs["type"] do
-      :sms -> create_sms_message(attrs_with_provider)
-      :mms -> create_mms_message(attrs_with_provider)
-      :email -> create_email_message(attrs_with_provider)
+      :sms -> create_sms_message(attrs_with_status)
+      :mms -> create_mms_message(attrs_with_status)
+      :email -> create_email_message(attrs_with_status)
       type -> {:error, "Unsupported message type: #{type}"}
     end
   end

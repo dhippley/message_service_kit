@@ -43,6 +43,15 @@ defmodule MessagingService.Message do
     field :provider_name, :string
     field :timestamp, :naive_datetime_usec
     field :conversation_id, :binary_id
+    
+    # Status tracking fields
+    field :status, :string, default: "pending"
+    field :direction, :string, default: "outbound"
+    field :queued_at, :naive_datetime_usec
+    field :sent_at, :naive_datetime_usec
+    field :delivered_at, :naive_datetime_usec
+    field :failed_at, :naive_datetime_usec
+    field :failure_reason, :string
 
     has_many :attachments, Attachment, foreign_key: :message_id
 
@@ -72,7 +81,14 @@ defmodule MessagingService.Message do
       :messaging_provider_id,
       :provider_name,
       :timestamp,
-      :conversation_id
+      :conversation_id,
+      :status,
+      :direction,
+      :queued_at,
+      :sent_at,
+      :delivered_at,
+      :failed_at,
+      :failure_reason
     ])
     |> validate_required([:to, :from, :type, :body])
     |> validate_message_type()

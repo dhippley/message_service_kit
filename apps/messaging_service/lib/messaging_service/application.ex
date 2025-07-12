@@ -14,6 +14,8 @@ defmodule MessagingService.Application do
       {Phoenix.PubSub, name: MessagingService.PubSub},
       # Start the Finch HTTP client for sending emails
       {Finch, name: MessagingService.Finch},
+      # Start Oban for background job processing
+      {Oban, Application.fetch_env!(:messaging_service, Oban)},
       # Start a worker by calling: MessagingService.Worker.start_link(arg)
       # {MessagingService.Worker, arg},
       # Start to serve requests, typically the last entry

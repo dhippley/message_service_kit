@@ -10,6 +10,18 @@ config :logger, level: :info
 # before starting your production server.
 config :messaging_service, MessagingServiceWeb.Endpoint, cache_static_manifest: "priv/static/cache_manifest.json"
 
+# Configure Oban for production
+config :messaging_service, Oban,
+  repo: MessagingService.Repo,
+  plugins: [
+    Oban.Plugins.Pruner,
+    {Oban.Plugins.Cron, crontab: [
+      # Add any cron jobs here
+      # {"0 2 * * *", MyApp.DailyWorker}
+    ]}
+  ],
+  queues: [default: 10, mailers: 20, events: 50, media: 10]
+
 # Configure webhook authentication for production
 # Use environment variables for security
 config :messaging_service, :webhook_auth,

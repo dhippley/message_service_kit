@@ -71,6 +71,12 @@ config :messaging_service, :env, :dev
 
 config :messaging_service, :environment, :dev
 
+# Configure Oban for background job processing
+config :messaging_service, Oban,
+  repo: MessagingService.Repo,
+  plugins: [Oban.Plugins.Pruner],
+  queues: [default: 10, mailers: 20, events: 50, media: 10]
+
 # Configure messaging providers
 config :messaging_service, :provider_configs,
   twilio: %{

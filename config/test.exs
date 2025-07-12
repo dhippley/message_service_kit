@@ -32,6 +32,13 @@ config :messaging_service, :env, :test
 # Configure the environment for provider manager
 config :messaging_service, :environment, :test
 
+# Configure Oban for testing - disable queues to prevent jobs from running during tests
+config :messaging_service, Oban,
+  repo: MessagingService.Repo,
+  testing: :inline,
+  queues: false,
+  plugins: false
+
 # Configure messaging providers for test
 config :messaging_service, :provider_configs,
   mock: %{
