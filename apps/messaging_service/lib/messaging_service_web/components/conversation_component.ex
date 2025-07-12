@@ -1,11 +1,11 @@
 defmodule MessagingServiceWeb.ConversationComponent do
   @moduledoc """
   A reusable LiveView component for displaying conversations.
-  
+
   This component can be used to display conversation cards with messages,
   participants, and status information.
   """
-  
+
   use MessagingServiceWeb, :live_component
 
   @doc """
@@ -20,7 +20,7 @@ defmodule MessagingServiceWeb.ConversationComponent do
 
   ## Examples
 
-      <.live_component 
+      <.live_component
         module={MessagingServiceWeb.ConversationComponent}
         id="conversation-123"
         conversation={%Conversation{}}
@@ -56,7 +56,7 @@ defmodule MessagingServiceWeb.ConversationComponent do
               </p>
             <% end %>
           </div>
-          
+
           <!-- Status badge -->
           <div class={[
             "ml-4 flex-shrink-0 px-3 py-1 text-xs font-medium rounded-full",
@@ -65,7 +65,7 @@ defmodule MessagingServiceWeb.ConversationComponent do
             <%= conversation_status_text(@conversation) %>
           </div>
         </div>
-        
+
         <!-- Conversation metadata -->
         <div class="mt-4 flex items-center justify-between text-sm text-gray-500">
           <div class="flex items-center space-x-4">
@@ -73,15 +73,15 @@ defmodule MessagingServiceWeb.ConversationComponent do
               <.icon name="hero-clock" class="w-4 h-4 mr-1" />
               <%= format_timestamp(@conversation.last_message_at) %>
             </div>
-            
+
             <div class="flex items-center">
               <.icon name="hero-chat-bubble-left-right" class="w-4 h-4 mr-1" />
               <%= @conversation.message_count %> messages
             </div>
           </div>
-          
+
           <%= if @clickable do %>
-            <.link 
+            <.link
               navigate={~p"/conversations/#{@conversation.id}"}
               class="text-blue-600 hover:text-blue-900 font-medium transition-colors"
             >
@@ -121,7 +121,7 @@ defmodule MessagingServiceWeb.ConversationComponent do
       ]}>
         <%= String.upcase(@message.type) %>
       </div>
-      
+
       <div class="flex-1 min-w-0">
         <div class="flex items-center justify-between">
           <span class={[
@@ -137,7 +137,7 @@ defmodule MessagingServiceWeb.ConversationComponent do
         <p class="text-sm text-gray-900 mt-1 line-clamp-2">
           <%= @message.body %>
         </p>
-        
+
         <%= if @message.status do %>
           <div class="mt-1 flex items-center">
             <div class={[
@@ -156,13 +156,13 @@ defmodule MessagingServiceWeb.ConversationComponent do
   end
 
   # Helper functions
-  
+
   defp format_participant(participant) do
     cond do
       String.contains?(participant, "@") ->
         # Email format - show just the local part for brevity
         participant |> String.split("@") |> List.first()
-      
+
       String.starts_with?(participant, "+") ->
         # Phone format - pretty print
         case String.replace(participant, ~r/\D/, "") do
@@ -170,7 +170,7 @@ defmodule MessagingServiceWeb.ConversationComponent do
             "+#{country_code} (#{area_code}) #{prefix}-#{number}"
           phone -> phone
         end
-      
+
       true -> participant
     end
   end
@@ -179,7 +179,7 @@ defmodule MessagingServiceWeb.ConversationComponent do
   defp format_timestamp(timestamp) do
     now = NaiveDateTime.utc_now()
     diff_seconds = NaiveDateTime.diff(now, timestamp)
-    
+
     cond do
       diff_seconds < 60 -> "Just now"
       diff_seconds < 3600 -> "#{div(diff_seconds, 60)}m ago"
@@ -195,13 +195,13 @@ defmodule MessagingServiceWeb.ConversationComponent do
 
   defp message_preview(messages) when is_list(messages) and length(messages) > 0 do
     last_message = List.last(messages)
-    
+
     preview = if String.length(last_message.body) > 60 do
       String.slice(last_message.body, 0, 60) <> "..."
     else
       last_message.body
     end
-    
+
     "#{direction_label(last_message.direction)}: #{preview}"
   end
   defp message_preview(%Ecto.Association.NotLoaded{}), do: "Messages not loaded"
@@ -209,7 +209,7 @@ defmodule MessagingServiceWeb.ConversationComponent do
 
   defp conversation_status_class(messages) when is_list(messages) and length(messages) > 0 do
     last_message = List.last(messages)
-    
+
     case last_message.direction do
       "inbound" -> "bg-blue-100 text-blue-800"
       "outbound" -> "bg-green-100 text-green-800"

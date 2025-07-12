@@ -15,7 +15,7 @@ defmodule MessagingServiceWeb.ConversationLive.Show do
   @impl true
   def handle_params(%{"id" => id}, _, socket) do
     conversation = Conversations.get_conversation_with_messages!(id)
-    
+
     {:noreply,
      socket
      |> assign(:conversation, conversation)

@@ -10,8 +10,8 @@ defmodule MessagingServiceWeb.ConversationLive.Index do
   @impl true
   def mount(_params, _session, socket) do
     conversations = Conversations.list_conversations_with_messages()
-    
-    {:ok, 
+
+    {:ok,
      socket
      |> assign(:conversations, conversations)
      |> assign(:page_title, "Conversations")

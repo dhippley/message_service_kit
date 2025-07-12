@@ -18,7 +18,7 @@ defmodule MessagingServiceWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :home
-    
+
     # LiveView routes
     live "/conversations", ConversationLive.Index, :index
     live "/conversations/:id", ConversationLive.Show, :show
