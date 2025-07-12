@@ -93,6 +93,7 @@ defmodule MessagingService.Message do
     |> validate_required([:to, :from, :type, :body])
     |> validate_message_type()
     |> validate_contact_format()
+    |> sanitize_body_content()
     |> validate_body_content()
     |> maybe_set_timestamp()
   end
@@ -186,6 +187,18 @@ defmodule MessagingService.Message do
     |> validate_format(field, ~r/^[^\s]+@[^\s]+\.[^\s]+$/, message: "must be a valid email address")
     # RFC 5321 limit
     |> validate_length(field, max: 320)
+  end
+
+  defp sanitize_body_content(changeset) do
+    case get_change(changeset, :body) do
+      nil ->
+        changeset
+
+      body ->
+        message_type = get_field(changeset, :type)
+        sanitized_body = sanitize_message_body(body, message_type)
+        put_change(changeset, :body, sanitized_body)
+    end
   end
 
   defp validate_body_content(changeset) do
@@ -297,4 +310,43 @@ defmodule MessagingService.Message do
     |> DateTime.from_naive!("Etc/UTC")
     |> DateTime.to_iso8601()
   end
+
+  # Private helper functions for sanitization
+
+  defp sanitize_message_body(body, message_type) do
+    case message_type do
+      "email" -> sanitize_html_content(body)
+      "sms" -> sanitize_text_content(body)
+      "mms" -> sanitize_text_content(body)
+      _ -> sanitize_text_content(body)
+    end
+  end
+
+  defp sanitize_html_content(html_content) when is_binary(html_content) do
+    html_content
+    |> String.replace(~r/<script[^>]*>.*?<\/script>/sim, "")  # Remove script tags
+    |> String.replace(~r/<style[^>]*>.*?<\/style>/sim, "")   # Remove style tags
+    |> String.replace(~r/<[^>]*>/, "")                       # Remove all HTML tags
+    |> String.replace(~r/&[a-zA-Z]+;/, "")                   # Remove HTML entities
+    |> String.replace(~r/\s+/, " ")                          # Normalize whitespace
+    |> String.trim()                                         # Trim leading/trailing space
+    |> ensure_max_length(100_000)                           # Ensure reasonable length
+  end
+
+  defp sanitize_html_content(content), do: content
+
+  defp sanitize_text_content(text_content) when is_binary(text_content) do
+    text_content
+    |> String.replace(~r/[^\P{C}\t\n\r]/, "")               # Remove control characters except tabs, newlines, carriage returns
+    |> String.replace(~r/\s+/, " ")                          # Normalize whitespace
+    |> String.trim()                                         # Trim leading/trailing space
+  end
+
+  defp sanitize_text_content(content), do: content
+
+  defp ensure_max_length(content, max_length) when byte_size(content) > max_length do
+    String.slice(content, 0, max_length)
+  end
+
+  defp ensure_max_length(content, _max_length), do: content
 end

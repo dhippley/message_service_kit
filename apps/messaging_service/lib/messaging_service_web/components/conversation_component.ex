@@ -43,15 +43,19 @@ defmodule MessagingServiceWeb.ConversationComponent do
     ]}>
       <div class="p-5">
         <!-- Header with participants -->
-        <div class="flex items-center justify-between">
+        <div class="flex items-start justify-between">
           <div class="flex-1 min-w-0">
-            <h3 class="text-lg font-medium text-gray-900 truncate">
-              <span class="text-blue-600"><%= format_participant(@conversation.participant_one) %></span>
-              <.icon name="hero-arrow-right-left" class="inline w-4 h-4 mx-2 text-gray-400" />
-              <span class="text-green-600"><%= format_participant(@conversation.participant_two) %></span>
+            <h3 class="text-base font-medium text-gray-900">
+              <div class="flex flex-col space-y-1">
+                <span class="text-blue-600 truncate"><%= format_participant(@conversation.participant_one) %></span>
+                <div class="flex items-center text-gray-400">
+                  <.icon name="hero-arrow-down" class="w-3 h-3 mr-1" />
+                  <span class="text-green-600 truncate"><%= format_participant(@conversation.participant_two) %></span>
+                </div>
+              </div>
             </h3>
             <%= if @show_messages do %>
-              <p class="mt-1 text-sm text-gray-500">
+              <p class="mt-2 text-sm text-gray-500 line-clamp-2">
                 <%= message_preview(@conversation.messages) %>
               </p>
             <% end %>
@@ -59,7 +63,7 @@ defmodule MessagingServiceWeb.ConversationComponent do
 
           <!-- Status badge -->
           <div class={[
-            "ml-4 flex-shrink-0 px-3 py-1 text-xs font-medium rounded-full",
+            "ml-3 flex-shrink-0 px-2 py-1 text-xs font-medium rounded-full",
             conversation_status_class(@conversation.messages)
           ]}>
             <%= conversation_status_text(@conversation) %>
@@ -67,23 +71,23 @@ defmodule MessagingServiceWeb.ConversationComponent do
         </div>
 
         <!-- Conversation metadata -->
-        <div class="mt-4 flex items-center justify-between text-sm text-gray-500">
-          <div class="flex items-center space-x-4">
+        <div class="mt-4 flex flex-col space-y-2 text-sm text-gray-500">
+          <div class="flex items-center justify-between">
             <div class="flex items-center">
               <.icon name="hero-clock" class="w-4 h-4 mr-1" />
-              <%= format_timestamp(@conversation.last_message_at) %>
+              <span class="truncate"><%= format_timestamp(@conversation.last_message_at) %></span>
             </div>
 
             <div class="flex items-center">
               <.icon name="hero-chat-bubble-left-right" class="w-4 h-4 mr-1" />
-              <%= @conversation.message_count %> messages
+              <%= @conversation.message_count %>
             </div>
           </div>
 
           <%= if @clickable do %>
             <.link
               navigate={~p"/conversations/#{@conversation.id}"}
-              class="text-blue-600 hover:text-blue-900 font-medium transition-colors"
+              class="text-blue-600 hover:text-blue-900 font-medium transition-colors text-center py-1"
             >
               View Details →
             </.link>
@@ -92,13 +96,13 @@ defmodule MessagingServiceWeb.ConversationComponent do
 
         <!-- Recent messages preview -->
         <%= if @show_messages && has_loaded_messages?(@conversation) do %>
-          <div class="mt-4 border-t pt-4">
-            <h4 class="text-sm font-medium text-gray-900 mb-3 flex items-center">
-              <.icon name="hero-chat-bubble-oval-left" class="w-4 h-4 mr-1" />
-              Recent Messages
+          <div class="mt-4 border-t pt-3">
+            <h4 class="text-xs font-medium text-gray-700 mb-2 flex items-center">
+              <.icon name="hero-chat-bubble-oval-left" class="w-3 h-3 mr-1" />
+              Recent
             </h4>
-            <div class="space-y-3 max-h-40 overflow-y-auto">
-              <%= for message <- Enum.take(@conversation.messages || [], -3) do %>
+            <div class="space-y-2 max-h-32 overflow-y-auto">
+              <%= for message <- Enum.take(@conversation.messages || [], -2) do %>
                 <.message_preview_card message={message} />
               <% end %>
             </div>
@@ -114,9 +118,9 @@ defmodule MessagingServiceWeb.ConversationComponent do
 
   defp message_preview_card(assigns) do
     ~H"""
-    <div class="flex items-start space-x-3 p-2 bg-gray-50 rounded-lg">
+    <div class="flex items-start space-x-2 p-2 bg-gray-50 rounded-md">
       <div class={[
-        "px-2 py-1 rounded-full text-xs font-medium shrink-0",
+        "px-1.5 py-0.5 rounded text-xs font-medium shrink-0",
         message_type_class(@message)
       ]}>
         <%= String.upcase(@message.type) %>
@@ -125,23 +129,22 @@ defmodule MessagingServiceWeb.ConversationComponent do
       <div class="flex-1 min-w-0">
         <div class="flex items-center justify-between">
           <span class={[
-            "text-xs font-medium",
+            "text-xs font-medium truncate",
             direction_color(@message.direction)
           ]}>
             <%= direction_label(@message.direction) %>
           </span>
-          <span class="text-xs text-gray-500">
+          <span class="text-xs text-gray-500 ml-2">
             <%= format_message_time(@message.timestamp) %>
-          </span>
-        </div>
-        <p class="text-sm text-gray-900 mt-1 line-clamp-2">
-          <%= @message.body %>
+          </span>        </div>
+        <p class="text-xs text-gray-900 mt-0.5 line-clamp-2">
+          <%= clean_message_body(@message.body, @message.type) %>
         </p>
 
         <%= if @message.status do %>
           <div class="mt-1 flex items-center">
             <div class={[
-              "w-2 h-2 rounded-full mr-2",
+              "w-1.5 h-1.5 rounded-full mr-1",
               status_indicator_color(@message.status)
             ]}>
             </div>
@@ -196,10 +199,12 @@ defmodule MessagingServiceWeb.ConversationComponent do
   defp message_preview(messages) when is_list(messages) and length(messages) > 0 do
     last_message = List.last(messages)
 
-    preview = if String.length(last_message.body) > 60 do
-      String.slice(last_message.body, 0, 60) <> "..."
+    clean_body = clean_message_body(last_message.body, last_message.type)
+
+    preview = if String.length(clean_body) > 60 do
+      String.slice(clean_body, 0, 60) <> "..."
     else
-      last_message.body
+      clean_body
     end
 
     "#{direction_label(last_message.direction)}: #{preview}"
@@ -268,5 +273,19 @@ defmodule MessagingServiceWeb.ConversationComponent do
       messages when is_list(messages) -> not Enum.empty?(messages)
       _ -> false
     end
+  end
+
+  defp clean_message_body(body, type) do
+    case type do
+      "email" -> strip_html_tags(body)
+      _ -> body
+    end
+  end
+
+  defp strip_html_tags(html_content) do
+    html_content
+    |> String.replace(~r/<[^>]*>/, "")
+    |> String.replace(~r/\s+/, " ")
+    |> String.trim()
   end
 end
