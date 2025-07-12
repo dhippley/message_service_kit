@@ -62,12 +62,26 @@ This project uses several code quality tools:
 # Format code
 mix format
 
+# Advanced formatting with Styler
+mix style              # Format code with Styler
+mix style --check      # Check if code is properly formatted with Styler
+
 # Static analysis with Credo
 mix credo
 mix credo --strict
 
 # Type analysis with Dialyzer
 mix dialyzer
+
+# Test coverage with Coveralls
+mix coveralls              # Generate coverage report
+mix coveralls.html         # Generate HTML coverage report
+mix coveralls.json         # Generate JSON coverage report
+mix coveralls.github       # Generate coverage for GitHub Actions
+
+# Convenience aliases (from messaging_service app)
+cd apps/messaging_service && mix test.coverage      # Same as coveralls
+cd apps/messaging_service && mix test.coverage.html # Same as coveralls.html
 
 # Run all quality checks
 cd apps/messaging_service && mix quality
