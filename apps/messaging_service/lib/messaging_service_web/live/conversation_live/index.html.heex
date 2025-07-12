@@ -1,0 +1,32 @@
+<.header>
+  All Conversations
+  <:subtitle>Manage and view all active conversations</:subtitle>
+  <:actions>
+    <.button phx-click="refresh" class="bg-blue-600 hover:bg-blue-700">
+      <.icon name="hero-arrow-path" class="w-4 h-4 mr-2" />
+      Refresh
+    </.button>
+  </:actions>
+</.header>
+
+<div class="mt-8">
+  <%= if Enum.empty?(@conversations) do %>
+    <div class="text-center py-12">
+      <.icon name="hero-chat-bubble-left-right" class="mx-auto h-12 w-12 text-gray-400" />
+      <h3 class="mt-2 text-sm font-semibold text-gray-900">No conversations</h3>
+      <p class="mt-1 text-sm text-gray-500">Get started by sending your first message.</p>
+    </div>
+  <% else %>
+    <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <%= for conversation <- @conversations do %>
+        <.live_component 
+          module={MessagingServiceWeb.ConversationComponent}
+          id={"conversation-#{conversation.id}"}
+          conversation={conversation}
+          show_messages={true}
+          clickable={true}
+        />
+      <% end %>
+    </div>
+  <% end %>
+</div>

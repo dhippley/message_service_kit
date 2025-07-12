@@ -1,0 +1,22 @@
+<.header>
+  Conversation Details
+  <:subtitle>
+    <%= format_participant(@conversation.participant_one) %> ↔ <%= format_participant(@conversation.participant_two) %>
+  </:subtitle>
+  <:actions>
+    <.link navigate={~p"/conversations"} class="text-sm font-semibold leading-6 text-zinc-900 hover:text-zinc-700">
+      ← Back to Conversations
+    </.link>
+  </:actions>
+</.header>
+
+<div class="mt-8">
+  <.live_component 
+    module={MessagingServiceWeb.ConversationComponent}
+    id={"conversation-detail-#{@conversation.id}"}
+    conversation={@conversation}
+    show_messages={true}
+    clickable={false}
+    class="max-w-4xl mx-auto"
+  />
+</div>
