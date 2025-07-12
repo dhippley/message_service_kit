@@ -3,8 +3,9 @@
 # Test script for messaging service endpoints
 # This script tests the local messaging service using the JSON examples from README.md
 
-BASE_URL="http://localhost:8080"
+BASE_URL="http://localhost:4000"
 CONTENT_TYPE="Content-Type: application/json"
+AUTH_HEADER="Authorization: Bearer dev-bearer-token-123"
 
 echo "=== Testing Messaging Service Endpoints ==="
 echo "Base URL: $BASE_URL"
@@ -55,6 +56,7 @@ curl -X POST "$BASE_URL/api/messages/email" \
 echo "4. Testing incoming SMS webhook..."
 curl -X POST "$BASE_URL/api/webhooks/sms" \
   -H "$CONTENT_TYPE" \
+  -H "$AUTH_HEADER" \
   -d '{
     "from": "+18045551234",
     "to": "+12016661234",
@@ -70,6 +72,7 @@ curl -X POST "$BASE_URL/api/webhooks/sms" \
 echo "5. Testing incoming MMS webhook..."
 curl -X POST "$BASE_URL/api/webhooks/sms" \
   -H "$CONTENT_TYPE" \
+  -H "$AUTH_HEADER" \
   -d '{
     "from": "+18045551234",
     "to": "+12016661234",
@@ -85,6 +88,7 @@ curl -X POST "$BASE_URL/api/webhooks/sms" \
 echo "6. Testing incoming Email webhook..."
 curl -X POST "$BASE_URL/api/webhooks/email" \
   -H "$CONTENT_TYPE" \
+  -H "$AUTH_HEADER" \
   -d '{
     "from": "contact@gmail.com",
     "to": "user@usehatchapp.com",

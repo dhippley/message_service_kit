@@ -216,22 +216,78 @@ POST /api/conversations/{conversation_id}/messages
 
 ## Webhooks
 
-The service supports webhooks from messaging providers for real-time status updates:
+The service supports webhooks for both receiving inbound messages and delivery status updates from messaging providers:
 
-### Twilio Webhooks
+### Inbound Message Webhooks
+
+#### Generic Inbound SMS/MMS
 ```
-POST /webhooks/twilio
+POST /api/webhooks/sms
+```
+Expected payload:
+```json
+{
+  "from": "+18045551234",
+  "to": "+12016661234", 
+  "type": "sms",
+  "messaging_provider_id": "message-1",
+  "body": "This is an incoming SMS message",
+  "attachments": null,
+  "timestamp": "2024-11-01T14:00:00Z"
+}
 ```
 
-### SendGrid Webhooks
+#### Generic Inbound Email
 ```
-POST /webhooks/sendgrid
+POST /api/webhooks/email
+```
+Expected payload:
+```json
+{
+  "from": "contact@gmail.com",
+  "to": "user@usehatchapp.com",
+  "xillio_id": "message-3",
+  "body": "<html><body>Incoming email content</body></html>",
+  "attachments": ["https://example.com/document.pdf"],
+  "timestamp": "2024-11-01T14:00:00Z"
+}
 ```
 
-Webhooks are secured with multiple authentication methods:
+### Provider-Specific Webhooks
+
+#### Twilio Webhooks
+```
+POST /api/webhooks/twilio
+```
+Handles both inbound messages and delivery status updates in Twilio's native format.
+
+#### SendGrid Webhooks
+```
+POST /api/webhooks/sendgrid
+```
+Handles both inbound emails and delivery event notifications in SendGrid's native format.
+
+### Legacy Webhook Endpoints
+```
+POST /api/webhooks/messages        # Generic message webhook
+POST /api/webhooks/messages/batch  # Batch message processing
+GET  /api/webhooks/health          # Health check
+```
+
+### Authentication
+
+All webhook endpoints (except health check) are secured with multiple authentication methods:
 - Bearer tokens in `Authorization` header
-- API keys in `X-API-Key` header
+- API keys in `X-API-Key` header  
 - Basic authentication
+
+Example with authentication:
+```bash
+curl -X POST "http://localhost:4000/api/webhooks/sms" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer dev-bearer-token-123" \
+  -d '{"from": "+1234567890", "to": "+0987654321", "type": "sms", "body": "Hello!"}'
+```
 
 ## Development
 
