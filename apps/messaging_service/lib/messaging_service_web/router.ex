@@ -24,10 +24,24 @@ defmodule MessagingServiceWeb.Router do
   scope "/api", MessagingServiceWeb do
     pipe_through :api
 
+    # Message sending endpoints
+    post "/messages/sms", MessageController, :send_sms
+    post "/messages/email", MessageController, :send_email
+    
+    # Conversation endpoints
+    get "/conversations", ConversationController, :index
+    get "/conversations/:id/messages", ConversationController, :show_messages
+
     # Webhook endpoints for receiving messages
     post "/webhooks/messages", WebhookController, :receive_message
     post "/webhooks/messages/batch", WebhookController, :receive_batch
     get "/webhooks/health", WebhookController, :health_check
+
+    # Provider-specific inbound webhook endpoints
+    post "/webhooks/sms", WebhookController, :receive_inbound_sms
+    post "/webhooks/email", WebhookController, :receive_inbound_email
+    post "/webhooks/twilio", WebhookController, :receive_twilio_webhook
+    post "/webhooks/sendgrid", WebhookController, :receive_sendgrid_webhook
   end
 
   # Enable LiveDashboard and Swoosh mailbox preview in development

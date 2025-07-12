@@ -240,7 +240,21 @@ defmodule MessagingServiceWeb.WebhookController do
     end
   end
 
-  defp normalize_attachment_params(attachment) do
+  defp normalize_attachment_params(attachment) when is_binary(attachment) do
+    # Handle simple URL string
+    %{
+      filename: nil,
+      content_type: nil,
+      url: attachment,
+      attachment_type: "other",
+      size: nil
+    }
+    |> Enum.reject(fn {_k, v} -> is_nil(v) end)
+    |> Enum.into(%{})
+  end
+
+  defp normalize_attachment_params(attachment) when is_map(attachment) do
+    # Handle attachment object
     %{
       filename: get_param(attachment, "filename"),
       content_type: get_param(attachment, "content_type"),
@@ -297,5 +311,278 @@ defmodule MessagingServiceWeb.WebhookController do
 
   defp format_error(error) do
     to_string(error)
+  end
+
+  @doc """
+  Receives inbound SMS/MMS messages from providers.
+
+  Expected format for test scripts and generic providers:
+  ```json
+  {
+    "from": "+18045551234",
+    "to": "+12016661234",
+    "type": "sms",
+    "messaging_provider_id": "message-1",
+    "body": "This is an incoming SMS message",
+    "attachments": null,
+    "timestamp": "2024-11-01T14:00:00Z"
+  }
+  ```
+  """
+  def receive_inbound_sms(conn, params) do
+    Logger.info("Received inbound SMS webhook: #{inspect(params)}")
+
+    # Ensure type is set for SMS/MMS
+    params = Map.put(params, "type", params["type"] || "sms")
+
+    case process_incoming_message(params) do
+      {:ok, message} ->
+        Logger.info("Successfully processed inbound SMS: #{message.id}")
+
+        conn
+        |> put_status(:ok)
+        |> json(%{
+          success: true,
+          message_id: message.id,
+          conversation_id: message.conversation_id,
+          status: "received"
+        })
+
+      {:error, reason} ->
+        Logger.error("Failed to process inbound SMS: #{inspect(reason)}")
+
+        conn
+        |> put_status(:unprocessable_entity)
+        |> json(%{
+          success: false,
+          error: "Failed to process SMS",
+          details: format_error(reason)
+        })
+    end
+  end
+
+  @doc """
+  Receives inbound email messages from providers.
+
+  Expected format for test scripts and generic providers:
+  ```json
+  {
+    "from": "contact@gmail.com",
+    "to": "user@usehatchapp.com",
+    "xillio_id": "message-3",
+    "body": "<html><body>This is an incoming email with <b>HTML</b> content</body></html>",
+    "attachments": ["https://example.com/received-document.pdf"],
+    "timestamp": "2024-11-01T14:00:00Z"
+  }
+  ```
+  """
+  def receive_inbound_email(conn, params) do
+    Logger.info("Received inbound email webhook: #{inspect(params)}")
+
+    # Normalize email-specific params
+    normalized_params = params
+    |> Map.put("type", "email")
+    |> Map.put("provider_id", params["xillio_id"] || params["provider_id"] || params["messaging_provider_id"])
+    |> Map.put("subject", params["subject"] || "")
+
+    case process_incoming_message(normalized_params) do
+      {:ok, message} ->
+        Logger.info("Successfully processed inbound email: #{message.id}")
+
+        conn
+        |> put_status(:ok)
+        |> json(%{
+          success: true,
+          message_id: message.id,
+          conversation_id: message.conversation_id,
+          status: "received"
+        })
+
+      {:error, reason} ->
+        Logger.error("Failed to process inbound email: #{inspect(reason)}")
+
+        conn
+        |> put_status(:unprocessable_entity)
+        |> json(%{
+          success: false,
+          error: "Failed to process email",
+          details: format_error(reason)
+        })
+    end
+  end
+
+  @doc """
+  Receives webhooks from Twilio for message status updates and inbound messages.
+
+  Handles both delivery status updates and inbound message notifications.
+  """
+  def receive_twilio_webhook(conn, params) do
+    Logger.info("Received Twilio webhook: #{inspect(params)}")
+
+    case determine_twilio_webhook_type(params) do
+      :status_update ->
+        handle_twilio_status_update(conn, params)
+
+      :inbound_message ->
+        handle_twilio_inbound_message(conn, params)
+
+      :unknown ->
+        Logger.warning("Unknown Twilio webhook type: #{inspect(params)}")
+
+        conn
+        |> put_status(:ok)
+        |> json(%{success: true, status: "ignored"})
+    end
+  end
+
+  @doc """
+  Receives webhooks from SendGrid for email delivery events and inbound emails.
+
+  Handles email delivery status updates and inbound email notifications.
+  """
+  def receive_sendgrid_webhook(conn, params) do
+    Logger.info("Received SendGrid webhook: #{inspect(params)}")
+
+    case determine_sendgrid_webhook_type(params) do
+      :status_update ->
+        handle_sendgrid_status_update(conn, params)
+
+      :inbound_email ->
+        handle_sendgrid_inbound_email(conn, params)
+
+      :unknown ->
+        Logger.warning("Unknown SendGrid webhook type: #{inspect(params)}")
+
+        conn
+        |> put_status(:ok)
+        |> json(%{success: true, status: "ignored"})
+    end
+  end
+
+  # Private helper functions for Twilio webhooks
+  defp determine_twilio_webhook_type(params) do
+    cond do
+      # Inbound message (has From, To, Body)
+      params["From"] && params["To"] && params["Body"] ->
+        :inbound_message
+
+      # Status update (has MessageStatus or SmsStatus)
+      params["MessageStatus"] || params["SmsStatus"] ->
+        :status_update
+
+      true ->
+        :unknown
+    end
+  end
+
+  defp handle_twilio_status_update(conn, params) do
+    # Handle status updates - would update existing message status
+    message_sid = params["MessageSid"] || params["SmsSid"]
+    status = params["MessageStatus"] || params["SmsStatus"]
+
+    Logger.info("Twilio status update - SID: #{message_sid}, Status: #{status}")
+
+    # Here you would update the message status in the database
+    # For now, just acknowledge receipt
+    conn
+    |> put_status(:ok)
+    |> json(%{success: true, status: "status_updated"})
+  end
+
+  defp handle_twilio_inbound_message(conn, params) do
+    # Convert Twilio format to our standard format
+    normalized_params = %{
+      "type" => if(params["NumMedia"] && params["NumMedia"] != "0", do: "mms", else: "sms"),
+      "from" => params["From"],
+      "to" => params["To"],
+      "body" => params["Body"] || "",
+      "provider_id" => params["MessageSid"] || params["SmsSid"],
+      "timestamp" => DateTime.utc_now() |> DateTime.to_iso8601()
+    }
+
+    case process_incoming_message(normalized_params) do
+      {:ok, message} ->
+        Logger.info("Successfully processed Twilio inbound message: #{message.id}")
+
+        # Twilio expects TwiML response for inbound messages
+        conn
+        |> put_resp_content_type("text/xml")
+        |> send_resp(200, """
+        <?xml version="1.0" encoding="UTF-8"?>
+        <Response>
+          <Message>Message received and processed</Message>
+        </Response>
+        """)
+
+      {:error, reason} ->
+        Logger.error("Failed to process Twilio inbound message: #{inspect(reason)}")
+
+        conn
+        |> put_resp_content_type("text/xml")
+        |> send_resp(500, """
+        <?xml version="1.0" encoding="UTF-8"?>
+        <Response>
+          <Message>Failed to process message</Message>
+        </Response>
+        """)
+    end
+  end
+
+  # Private helper functions for SendGrid webhooks
+  defp determine_sendgrid_webhook_type(params) do
+    cond do
+      # Inbound email parsing webhook
+      params["from"] && params["to"] && params["html"] ->
+        :inbound_email
+
+      # Event webhook (delivery status)
+      is_list(params) || params["event"] ->
+        :status_update
+
+      true ->
+        :unknown
+    end
+  end
+
+  defp handle_sendgrid_status_update(conn, params) do
+    # Handle SendGrid event webhooks
+    events = if is_list(params), do: params, else: [params]
+
+    Logger.info("SendGrid status update - #{length(events)} events")
+
+    # Here you would process each event and update message statuses
+    # For now, just acknowledge receipt
+    conn
+    |> put_status(:ok)
+    |> json(%{success: true, status: "events_processed", count: length(events)})
+  end
+
+  defp handle_sendgrid_inbound_email(conn, params) do
+    # Convert SendGrid inbound email format to our standard format
+    normalized_params = %{
+      "type" => "email",
+      "from" => params["from"],
+      "to" => params["to"],
+      "subject" => params["subject"] || "",
+      "body" => params["html"] || params["text"] || "",
+      "provider_id" => "sendgrid_" <> (:crypto.strong_rand_bytes(8) |> Base.encode16(case: :lower)),
+      "timestamp" => DateTime.utc_now() |> DateTime.to_iso8601()
+    }
+
+    case process_incoming_message(normalized_params) do
+      {:ok, message} ->
+        Logger.info("Successfully processed SendGrid inbound email: #{message.id}")
+
+        conn
+        |> put_status(:ok)
+        |> json(%{success: true, message_id: message.id})
+
+      {:error, reason} ->
+        Logger.error("Failed to process SendGrid inbound email: #{inspect(reason)}")
+
+        conn
+        |> put_status(:unprocessable_entity)
+        |> json(%{success: false, error: format_error(reason)})
+    end
   end
 end
