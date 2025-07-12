@@ -113,11 +113,7 @@ defmodule MessagingServiceWeb.MessageController do
 
   defp create_and_send_message(params, default_type) do
     message_params = normalize_message_params(params, default_type)
-
-    with {:ok, message} <- create_message_by_type(message_params),
-         {:ok, _result} <- send_to_provider(message) do
-      {:ok, message}
-    end
+    create_message_by_type(message_params)
   end
 
   defp normalize_message_params(params, default_type) do
@@ -145,26 +141,19 @@ defmodule MessagingServiceWeb.MessageController do
   defp normalize_attachments(_), do: []
 
   defp create_message_by_type(%{type: "sms"} = attrs) do
-    Messages.create_sms_message(attrs)
+    Messages.send_sms(attrs.to, attrs.from, attrs.body)
   end
 
   defp create_message_by_type(%{type: "mms"} = attrs) do
-    Messages.create_mms_message(attrs)
+    Messages.send_mms(attrs.to, attrs.from, attrs.body, attrs.attachments || [])
   end
 
   defp create_message_by_type(%{type: "email"} = attrs) do
-    Messages.create_email_message(attrs)
+    Messages.send_email(attrs.to, attrs.from, attrs.body, attrs.attachments || [])
   end
 
   defp create_message_by_type(_attrs) do
     {:error, "Unsupported message type"}
-  end
-
-  defp send_to_provider(message) do
-    # TODO: Implement actual provider sending logic
-    # For now, just log and return success
-    Logger.info("Sending message #{message.id} to provider: #{message.type}")
-    {:ok, %{provider_id: "mock-#{System.unique_integer()}", status: "queued"}}
   end
 
   defp parse_timestamp(nil), do: nil

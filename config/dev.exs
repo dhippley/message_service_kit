@@ -85,7 +85,7 @@ config :messaging_service, :provider_configs,
       auth_token: System.get_env("TWILIO_AUTH_TOKEN", "test_token_123456789012345678901234"),
       from_number: System.get_env("TWILIO_FROM_NUMBER", "+15551234567")
     },
-    enabled: false
+    enabled: true
   },
   sendgrid: %{
     provider: :sendgrid,
@@ -94,7 +94,7 @@ config :messaging_service, :provider_configs,
       from_email: System.get_env("SENDGRID_FROM_EMAIL", "test@example.com"),
       from_name: System.get_env("SENDGRID_FROM_NAME", "Test Service")
     },
-    enabled: false
+    enabled: true
   }
 
 # Configure webhook authentication for development

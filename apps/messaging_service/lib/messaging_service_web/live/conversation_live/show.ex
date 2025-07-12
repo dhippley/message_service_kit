@@ -14,13 +14,19 @@ defmodule MessagingServiceWeb.ConversationLive.Show do
 
   @impl true
   def handle_params(%{"id" => id}, _, socket) do
-    conversation = Conversations.get_conversation_with_messages!(id)
+    case Conversations.get_conversation_with_messages(id) do
+      nil ->
+        {:noreply,
+         socket
+         |> put_flash(:error, "Conversation not found")
+         |> push_navigate(to: ~p"/conversations")}
 
-    {:noreply,
-     socket
-     |> assign(:conversation, conversation)
-     |> assign(:page_title, "Conversation Details")
-    }
+      conversation ->
+        {:noreply,
+         socket
+         |> assign(:conversation, conversation)
+         |> assign(:page_title, "Conversation Details")}
+    end
   end
 
   defp format_participant(participant) do
@@ -30,10 +36,14 @@ defmodule MessagingServiceWeb.ConversationLive.Show do
     else
       # Phone format - pretty print
       case String.replace(participant, ~r/\D/, "") do
-        <<"+", rest::binary>> -> "+#{rest}"
+        <<"+", rest::binary>> ->
+          "+#{rest}"
+
         <<country_code::binary-size(1), area_code::binary-size(3), prefix::binary-size(3), number::binary-size(4)>> ->
           "+#{country_code} (#{area_code}) #{prefix}-#{number}"
-        phone -> phone
+
+        phone ->
+          phone
       end
     end
   end

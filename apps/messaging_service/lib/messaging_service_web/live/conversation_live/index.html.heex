@@ -3,8 +3,7 @@
   <:subtitle>Manage and view all active conversations</:subtitle>
   <:actions>
     <.button phx-click="refresh" class="bg-blue-600 hover:bg-blue-700">
-      <.icon name="hero-arrow-path" class="w-4 h-4 mr-2" />
-      Refresh
+      <.icon name="hero-arrow-path" class="w-4 h-4 mr-2" /> Refresh
     </.button>
   </:actions>
 </.header>
@@ -19,7 +18,7 @@
   <% else %>
     <div class="grid gap-6 lg:grid-cols-2 xl:grid-cols-2">
       <%= for conversation <- @conversations do %>
-        <.live_component 
+        <.live_component
           module={MessagingServiceWeb.ConversationComponent}
           id={"conversation-#{conversation.id}"}
           conversation={conversation}

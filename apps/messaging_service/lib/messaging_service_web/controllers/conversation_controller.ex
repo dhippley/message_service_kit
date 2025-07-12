@@ -63,16 +63,25 @@ defmodule MessagingServiceWeb.ConversationController do
           })
 
         conversation ->
-          conversation_with_messages = Conversations.get_conversation_with_messages!(conversation_id)
+          case Conversations.get_conversation_with_messages(conversation_id) do
+            nil ->
+              conn
+              |> put_status(:not_found)
+              |> json(%{
+                success: false,
+                error: "Conversation not found"
+              })
 
-          conn
-          |> put_status(:ok)
-          |> json(%{
-            success: true,
-            conversation_id: conversation.id,
-            data: conversation_with_messages.messages,
-            count: length(conversation_with_messages.messages)
-          })
+            conversation_with_messages ->
+              conn
+              |> put_status(:ok)
+              |> json(%{
+                success: true,
+                conversation_id: conversation.id,
+                data: conversation_with_messages.messages,
+                count: length(conversation_with_messages.messages)
+              })
+          end
       end
     rescue
       error ->

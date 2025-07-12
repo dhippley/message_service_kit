@@ -14,8 +14,7 @@ defmodule MessagingServiceWeb.ConversationLive.Index do
     {:ok,
      socket
      |> assign(:conversations, conversations)
-     |> assign(:page_title, "Conversations")
-    }
+     |> assign(:page_title, "Conversations")}
   end
 
   @impl true
@@ -24,8 +23,7 @@ defmodule MessagingServiceWeb.ConversationLive.Index do
   end
 
   defp apply_action(socket, :index, _params) do
-    socket
-    |> assign(:page_title, "All Conversations")
+    assign(socket, :page_title, "All Conversations")
   end
 
   @impl true

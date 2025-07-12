@@ -324,29 +324,31 @@ defmodule MessagingService.Message do
 
   defp sanitize_html_content(html_content) when is_binary(html_content) do
     html_content
-    |> String.replace(~r/<script[^>]*>.*?<\/script>/sim, "")  # Remove script tags
-    |> String.replace(~r/<style[^>]*>.*?<\/style>/sim, "")   # Remove style tags
-    |> String.replace(~r/<[^>]*>/, "")                       # Remove all HTML tags
-    |> String.replace(~r/&[a-zA-Z]+;/, "")                   # Remove HTML entities
-    |> String.replace(~r/\s+/, " ")                          # Normalize whitespace
-    |> String.trim()                                         # Trim leading/trailing space
-    |> ensure_max_length(100_000)                           # Ensure reasonable length
+    # Remove script tags
+    |> String.replace(~r/<script[^>]*>.*?<\/script>/sim, "")
+    # Remove style tags
+    |> String.replace(~r/<style[^>]*>.*?<\/style>/sim, "")
+    # Remove all HTML tags
+    |> String.replace(~r/<[^>]*>/, "")
+    # Remove HTML entities
+    |> String.replace(~r/&[a-zA-Z]+;/, "")
+    # Normalize whitespace
+    |> String.replace(~r/\s+/, " ")
+    # Trim leading/trailing space
+    |> String.trim()
   end
 
   defp sanitize_html_content(content), do: content
 
   defp sanitize_text_content(text_content) when is_binary(text_content) do
     text_content
-    |> String.replace(~r/[^\P{C}\t\n\r]/, "")               # Remove control characters except tabs, newlines, carriage returns
-    |> String.replace(~r/\s+/, " ")                          # Normalize whitespace
-    |> String.trim()                                         # Trim leading/trailing space
+    # Remove control characters except tabs, newlines, carriage returns
+    |> String.replace(~r/[^\P{C}\t\n\r]/, "")
+    # Normalize whitespace
+    |> String.replace(~r/\s+/, " ")
+    # Trim leading/trailing space
+    |> String.trim()
   end
 
   defp sanitize_text_content(content), do: content
-
-  defp ensure_max_length(content, max_length) when byte_size(content) > max_length do
-    String.slice(content, 0, max_length)
-  end
-
-  defp ensure_max_length(content, _max_length), do: content
 end

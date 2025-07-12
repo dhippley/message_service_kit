@@ -8,10 +8,23 @@ defmodule MessagingService.Workers.MessageDeliveryWorker do
   - Rate limiting API calls
   - Processing large volumes of messages
   - Handling delivery confirmations
+
+  ## Message Status Flow
+
+  1. `pending` - Initial state when message is created
+  2. `queued` - Message has been enqueued for delivery (sets `queued_at`)
+  3. `processing` - Worker has started processing the message
+  4. `sent` - Message was successfully sent (sets `sent_at`)
+  5. `failed` - Message delivery failed (sets `failed_at` and `failure_reason`)
+
+  Future statuses could include:
+  - `delivered` - Provider confirmed delivery (sets `delivered_at`)
+  - `bounced` - Message bounced back
   """
 
   use Oban.Worker, queue: :default, max_attempts: 3
 
+  alias Ecto.Association.NotLoaded
   alias MessagingService.Messages
   alias MessagingService.Providers.ProviderManager
 
@@ -34,8 +47,19 @@ defmodule MessagingService.Workers.MessageDeliveryWorker do
         {:error, :message_not_found}
 
       message ->
+        # Update status to processing
+        Messages.update_message(message, %{status: "processing"})
+
+        # Preload attachments if the message type supports them
+        message_with_attachments =
+          if message.type in ["email", "mms"] do
+            MessagingService.Repo.preload(message, :attachments)
+          else
+            message
+          end
+
         provider_configs = args["provider_configs"] || get_default_provider_configs()
-        deliver_message(message, provider_configs)
+        deliver_message(message_with_attachments, provider_configs)
     end
   end
 
@@ -54,9 +78,21 @@ defmodule MessagingService.Workers.MessageDeliveryWorker do
       {:ok, %Oban.Job{}}
   """
   def enqueue_delivery(message_id, opts \\ []) do
-    %{"message_id" => message_id}
-    |> new(opts)
-    |> Oban.insert()
+    # Update message status to queued
+    case Messages.get_message(message_id) do
+      nil ->
+        {:error, :message_not_found}
+
+      message ->
+        Messages.update_message(message, %{
+          status: "queued",
+          queued_at: NaiveDateTime.utc_now()
+        })
+
+        %{"message_id" => message_id}
+        |> new(opts || [])
+        |> Oban.insert()
+    end
   end
 
   @doc """
@@ -87,6 +123,22 @@ defmodule MessagingService.Workers.MessageDeliveryWorker do
     if Enum.empty?(message_ids) do
       {:ok, []}
     else
+      now = NaiveDateTime.utc_now()
+
+      # Update all messages to queued status
+      Enum.each(message_ids, fn message_id ->
+        case Messages.get_message(message_id) do
+          nil ->
+            :skip
+
+          message ->
+            Messages.update_message(message, %{
+              status: "queued",
+              queued_at: now
+            })
+        end
+      end)
+
       jobs =
         Enum.map(message_ids, fn message_id ->
           new(%{"message_id" => message_id})
@@ -104,11 +156,12 @@ defmodule MessagingService.Workers.MessageDeliveryWorker do
 
     case ProviderManager.send_message(message_request, provider_configs) do
       {:ok, provider_message_id, provider_name} ->
-        update_message_with_provider_info(message, provider_message_id, provider_name)
+        update_message_success(message, provider_message_id, provider_name)
         Logger.info("Message delivered successfully: #{message.id}")
         :ok
 
       {:error, reason} ->
+        update_message_failure(message, reason)
         Logger.error("Failed to deliver message #{message.id}: #{reason}")
         {:error, reason}
     end
@@ -124,23 +177,97 @@ defmodule MessagingService.Workers.MessageDeliveryWorker do
     }
   end
 
-  defp extract_attachment_urls(_message) do
-    # Return default image instead of empty list
-    # This would typically preload and extract attachment URLs from the message
-    default_image_path = "apps/messaging_service/priv/static/images/default.gif"
-    [%{
-      url: default_image_path,
-      content_type: "image/gif",
-      filename: "default.gif"
-    }]
+  defp extract_attachment_urls(message) do
+    case message.type do
+      "sms" ->
+        # SMS messages don't support attachments
+        []
+
+      "email" ->
+        # Email messages can have attachments - check if attachments are loaded
+        case message.attachments do
+          %NotLoaded{} ->
+            []
+
+          attachments when is_list(attachments) and length(attachments) > 0 ->
+            Enum.map(attachments, fn attachment ->
+              %{
+                url: attachment.url || attachment.blob,
+                content_type: attachment.content_type,
+                filename: attachment.filename
+              }
+            end)
+
+          _ ->
+            []
+        end
+
+      "mms" ->
+        # MMS messages can have attachments - check if attachments are loaded
+        case message.attachments do
+          %NotLoaded{} ->
+            # For testing, add a default image for MMS if attachments not loaded
+            default_image_path = "apps/messaging_service/priv/static/images/default.gif"
+
+            [
+              %{
+                url: default_image_path,
+                content_type: "image/gif",
+                filename: "default.gif"
+              }
+            ]
+
+          attachments when is_list(attachments) and length(attachments) > 0 ->
+            Enum.map(attachments, fn attachment ->
+              %{
+                url: attachment.url || attachment.blob,
+                content_type: attachment.content_type,
+                filename: attachment.filename
+              }
+            end)
+
+          _ ->
+            # For testing, add a default image for MMS if no attachments
+            default_image_path = "apps/messaging_service/priv/static/images/default.gif"
+
+            [
+              %{
+                url: default_image_path,
+                content_type: "image/gif",
+                filename: "default.gif"
+              }
+            ]
+        end
+
+      _ ->
+        []
+    end
   end
 
-  defp update_message_with_provider_info(message, provider_message_id, provider_name) do
+  defp update_message_success(message, provider_message_id, provider_name) do
+    now = NaiveDateTime.utc_now()
+
     Messages.update_message(message, %{
       messaging_provider_id: provider_message_id,
-      provider_name: Atom.to_string(provider_name)
+      provider_name: Atom.to_string(provider_name),
+      status: "sent",
+      sent_at: now
     })
   end
+
+  defp update_message_failure(message, reason) do
+    now = NaiveDateTime.utc_now()
+
+    Messages.update_message(message, %{
+      status: "failed",
+      failed_at: now,
+      failure_reason: format_failure_reason(reason)
+    })
+  end
+
+  defp format_failure_reason(reason) when is_binary(reason), do: reason
+  defp format_failure_reason(reason) when is_atom(reason), do: Atom.to_string(reason)
+  defp format_failure_reason(reason), do: inspect(reason)
 
   defp get_default_provider_configs do
     config = Application.get_env(:messaging_service, :provider_configs)

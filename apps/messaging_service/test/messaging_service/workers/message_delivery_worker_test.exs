@@ -370,4 +370,181 @@ defmodule MessagingService.Workers.MessageDeliveryWorkerTest do
       assert logs =~ "Failed to deliver message #{message.id}: No suitable provider found for sms messages"
     end
   end
+
+  describe "perform/1 status updates" do
+    test "updates message status from queued to failed when no provider configured" do
+      {:ok, message} =
+        Messages.create_sms_message(%{
+          to: "+15551234567",
+          from: "+15559876543",
+          body: "Test status transitions",
+          type: "sms",
+          status: "queued",
+          direction: "outbound",
+          queued_at: NaiveDateTime.utc_now()
+        })
+
+      # Run the job - should fail due to no provider configured
+      original_level = Logger.level()
+      Logger.configure(level: :error)
+
+      logs =
+        capture_log(fn ->
+          result = perform_job(MessageDeliveryWorker, %{"message_id" => message.id})
+          assert {:error, _reason} = result
+        end)
+
+      Logger.configure(level: original_level)
+
+      # Reload message from database to check final status
+      updated_message = Messages.get_message!(message.id)
+      assert updated_message.status == "failed"
+      assert updated_message.failed_at != nil
+      assert updated_message.failure_reason != nil
+      # Check for the actual log message that gets generated
+      assert logs =~ "Failed to deliver message #{message.id}"
+    end
+
+    test "enqueue_delivery updates message status to queued with timestamp" do
+      {:ok, message} =
+        Messages.create_sms_message(%{
+          to: "+15551234567",
+          from: "+15559876543",
+          body: "Test queued status",
+          type: "sms",
+          status: "pending",
+          direction: "outbound"
+        })
+
+      # Ensure message starts as pending
+      assert message.status == "pending"
+      assert message.queued_at == nil
+
+      Oban.Testing.with_testing_mode(:manual, fn ->
+        {:ok, _job} = MessageDeliveryWorker.enqueue_delivery(message.id)
+
+        # Reload message from database
+        updated_message = Messages.get_message!(message.id)
+
+        assert updated_message.status == "queued"
+        assert updated_message.queued_at != nil
+        # Ensure queued_at is recent (within last 5 seconds)
+        assert NaiveDateTime.diff(NaiveDateTime.utc_now(), updated_message.queued_at) < 5
+      end)
+    end
+
+    test "handles different message types without crashing" do
+      message_types = [
+        %{type: "sms", to: "+15551234567", from: "+15559876543", body: "SMS test"},
+        %{type: "mms", to: "+15551234567", from: "+15559876543", body: "MMS test"},
+        %{type: "email", to: "test@example.com", from: "sender@example.com", body: "Email test"}
+      ]
+
+      Enum.each(message_types, fn attrs ->
+        base_attrs =
+          Map.merge(attrs, %{
+            status: "queued",
+            direction: "outbound",
+            queued_at: NaiveDateTime.utc_now()
+          })
+
+        {:ok, message} =
+          case attrs.type do
+            "sms" -> Messages.create_sms_message(base_attrs)
+            "mms" -> Messages.create_mms_message(base_attrs)
+            "email" -> Messages.create_email_message(base_attrs)
+          end
+
+        # Job should not crash, even if it fails due to no provider
+        original_level = Logger.level()
+        Logger.configure(level: :error)
+
+        capture_log(fn ->
+          perform_job(MessageDeliveryWorker, %{"message_id" => message.id})
+        end)
+
+        Logger.configure(level: original_level)
+
+        # Verify message status was updated (should be failed due to no provider)
+        updated_message = Messages.get_message!(message.id)
+        assert updated_message.status == "failed"
+      end)
+    end
+
+    test "batch enqueue updates all message statuses" do
+      # Create multiple messages
+      message_ids =
+        Enum.map(1..3, fn i ->
+          {:ok, message} =
+            Messages.create_sms_message(%{
+              to: "+155512345#{i}#{i}",
+              from: "+15559876543",
+              body: "Batch test #{i}",
+              type: "sms",
+              status: "pending",
+              direction: "outbound"
+            })
+
+          message.id
+        end)
+
+      # All should start as pending
+      messages = Enum.map(message_ids, &Messages.get_message!/1)
+      assert Enum.all?(messages, &(&1.status == "pending"))
+      assert Enum.all?(messages, &(&1.queued_at == nil))
+
+      Oban.Testing.with_testing_mode(:manual, fn ->
+        {:ok, jobs} = MessageDeliveryWorker.enqueue_batch_delivery(message_ids)
+        assert length(jobs) == 3
+
+        # All should now be queued
+        updated_messages = Enum.map(message_ids, &Messages.get_message!/1)
+        assert Enum.all?(updated_messages, &(&1.status == "queued"))
+        assert Enum.all?(updated_messages, &(&1.queued_at != nil))
+      end)
+    end
+
+    test "complete status lifecycle from pending through queued to failed" do
+      {:ok, message} =
+        Messages.create_sms_message(%{
+          to: "+15551234567",
+          from: "+15559876543",
+          body: "Complete lifecycle test",
+          type: "sms",
+          status: "pending",
+          direction: "outbound"
+        })
+
+      # 1. Initially pending
+      assert message.status == "pending"
+      assert message.queued_at == nil
+
+      # 2. Enqueue -> queued status
+      Oban.Testing.with_testing_mode(:manual, fn ->
+        {:ok, _job} = MessageDeliveryWorker.enqueue_delivery(message.id)
+
+        queued_message = Messages.get_message!(message.id)
+        assert queued_message.status == "queued"
+        assert queued_message.queued_at != nil
+
+        # 3. Process -> failed status (since no provider configured)
+        original_level = Logger.level()
+        Logger.configure(level: :error)
+
+        capture_log(fn ->
+          perform_job(MessageDeliveryWorker, %{"message_id" => message.id})
+        end)
+
+        Logger.configure(level: original_level)
+
+        final_message = Messages.get_message!(message.id)
+        assert final_message.status == "failed"
+        # Preserved
+        assert final_message.queued_at != nil
+        # New
+        assert final_message.failed_at != nil
+        assert final_message.failure_reason != nil
+      end)
+    end
+  end
 end

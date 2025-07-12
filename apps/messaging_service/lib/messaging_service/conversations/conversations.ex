@@ -80,6 +80,28 @@ defmodule MessagingService.Conversations do
   @doc """
   Gets a conversation with preloaded messages.
 
+  Returns `nil` if the Conversation does not exist.
+
+  ## Examples
+
+      iex> get_conversation_with_messages(conversation_id)
+      %Conversation{messages: [%Message{}, ...]}
+
+      iex> get_conversation_with_messages("nonexistent")
+      nil
+
+  """
+  def get_conversation_with_messages(id) do
+    messages_query = from(m in Message, order_by: [asc: m.timestamp], preload: :attachments)
+
+    Conversation
+    |> preload(messages: ^messages_query)
+    |> Repo.get(id)
+  end
+
+  @doc """
+  Gets a conversation with preloaded messages.
+
   ## Examples
 
       iex> get_conversation_with_messages!(conversation_id)
