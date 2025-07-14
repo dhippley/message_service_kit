@@ -31,6 +31,58 @@ defmodule MessagingService.Conversations do
   end
 
   @doc """
+  Returns a paginated list of conversations with preloaded messages.
+
+  ## Examples
+
+      iex> list_conversations_with_messages_paginated(page: 1, per_page: 10)
+      %{
+        conversations: [%Conversation{messages: [%Message{}, ...]}, ...],
+        total_count: 25,
+        page: 1,
+        per_page: 10,
+        total_pages: 3,
+        has_next: true,
+        has_prev: false
+      }
+
+  """
+  def list_conversations_with_messages_paginated(opts \\ []) do
+    page = Keyword.get(opts, :page, 1)
+    per_page = Keyword.get(opts, :per_page, 12)
+
+    messages_query = from(m in Message, order_by: [asc: m.timestamp])
+
+    # Get total count
+    total_count =
+      Conversation
+      |> Repo.aggregate(:count, :id)
+
+    # Calculate pagination info
+    total_pages = ceil(total_count / per_page)
+    offset = (page - 1) * per_page
+
+    # Get paginated conversations
+    conversations =
+      Conversation
+      |> order_by([c], desc: c.last_message_at)
+      |> limit(^per_page)
+      |> offset(^offset)
+      |> preload(messages: ^messages_query)
+      |> Repo.all()
+
+    %{
+      conversations: conversations,
+      total_count: total_count,
+      page: page,
+      per_page: per_page,
+      total_pages: total_pages,
+      has_next: page < total_pages,
+      has_prev: page > 1
+    }
+  end
+
+  @doc """
   Gets a single conversation.
 
   Returns `nil` if the Conversation does not exist.

@@ -923,6 +923,32 @@ select {
   height: 1.5rem;
 }
 
+.hero-chevron-left {
+  --hero-chevron-left: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" data-slot="icon">  <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5"/></svg>');
+  -webkit-mask: var(--hero-chevron-left);
+  mask: var(--hero-chevron-left);
+  -webkit-mask-repeat: no-repeat;
+          mask-repeat: no-repeat;
+  background-color: currentColor;
+  vertical-align: middle;
+  display: inline-block;
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.hero-chevron-right {
+  --hero-chevron-right: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" data-slot="icon">  <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5"/></svg>');
+  -webkit-mask: var(--hero-chevron-right);
+  mask: var(--hero-chevron-right);
+  -webkit-mask-repeat: no-repeat;
+          mask-repeat: no-repeat;
+  background-color: currentColor;
+  vertical-align: middle;
+  display: inline-block;
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
 .sr-only {
   position: absolute;
   width: 1px;
@@ -1173,6 +1199,10 @@ select {
 
 .mt-8 {
   margin-top: 2rem;
+}
+
+.mt-12 {
+  margin-top: 3rem;
 }
 
 .line-clamp-2 {
@@ -1477,6 +1507,12 @@ select {
   margin-bottom: calc(2rem * var(--tw-space-y-reverse));
 }
 
+.space-x-2 > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-x-reverse: 0;
+  margin-right: calc(0.5rem * var(--tw-space-x-reverse));
+  margin-left: calc(0.5rem * calc(1 - var(--tw-space-x-reverse)));
+}
+
 .divide-y > :not([hidden]) ~ :not([hidden]) {
   --tw-divide-y-reverse: 0;
   border-top-width: calc(1px * calc(1 - var(--tw-divide-y-reverse)));
@@ -1624,6 +1660,21 @@ select {
   border-color: rgb(212 212 216 / var(--tw-border-opacity));
 }
 
+.border-gray-700 {
+  --tw-border-opacity: 1;
+  border-color: rgb(55 65 81 / var(--tw-border-opacity));
+}
+
+.border-gray-800 {
+  --tw-border-opacity: 1;
+  border-color: rgb(31 41 55 / var(--tw-border-opacity));
+}
+
+.border-purple-500 {
+  --tw-border-opacity: 1;
+  border-color: rgb(168 85 247 / var(--tw-border-opacity));
+}
+
 .bg-blue-500 {
   --tw-bg-opacity: 1;
   background-color: rgb(59 130 246 / var(--tw-bg-opacity));
@@ -1728,6 +1779,14 @@ select {
 .bg-zinc-900 {
   --tw-bg-opacity: 1;
   background-color: rgb(24 24 27 / var(--tw-bg-opacity));
+}
+
+.bg-gray-800\/20 {
+  background-color: rgb(31 41 55 / 0.2);
+}
+
+.bg-gray-800\/50 {
+  background-color: rgb(31 41 55 / 0.5);
 }
 
 .bg-gradient-to-br {
@@ -2207,6 +2266,11 @@ select {
   --tw-shadow: var(--tw-shadow-colored);
 }
 
+.shadow-purple-500\/25 {
+  --tw-shadow-color: rgb(168 85 247 / 0.25);
+  --tw-shadow: var(--tw-shadow-colored);
+}
+
 .outline {
   outline-style: solid;
 }
@@ -2318,6 +2382,11 @@ select {
   border-color: rgb(255 255 255 / 0.3);
 }
 
+.hover\:border-gray-600:hover {
+  --tw-border-opacity: 1;
+  border-color: rgb(75 85 99 / var(--tw-border-opacity));
+}
+
 .hover\:bg-white\/10:hover {
   background-color: rgb(255 255 255 / 0.1);
 }
@@ -2334,6 +2403,10 @@ select {
 .hover\:bg-zinc-700:hover {
   --tw-bg-opacity: 1;
   background-color: rgb(63 63 70 / var(--tw-bg-opacity));
+}
+
+.hover\:bg-gray-700\/50:hover {
+  background-color: rgb(55 65 81 / 0.5);
 }
 
 .hover\:from-purple-500\/30:hover {
