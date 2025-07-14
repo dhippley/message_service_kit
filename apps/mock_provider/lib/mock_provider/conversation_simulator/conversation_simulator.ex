@@ -120,6 +120,7 @@ defmodule MockProvider.ConversationSimulator do
   end
 
   defp send_message(message) do
+    # Send message with recipients as a list (group messaging)
     case message.endpoint do
       "api" -> send_via_api(message)
       "webhook" -> send_via_webhook(message)
@@ -130,8 +131,9 @@ defmodule MockProvider.ConversationSimulator do
   defp send_via_api(message) do
     case send_sms_to_messaging_service(message) do
       {:ok, response} ->
-        Logger.info("Sent API message: #{message.body} (#{message.from} -> #{message.to})")
-        response
+        recipients = if is_list(message.to), do: Enum.join(message.to, ", "), else: message.to
+        Logger.info("Sent API message: #{message.body} (#{message.from} -> #{recipients})")
+        {:ok, response}
 
       {:error, reason} ->
         Logger.error("Failed to send API message: #{inspect(reason)}")
@@ -142,8 +144,9 @@ defmodule MockProvider.ConversationSimulator do
   defp send_via_webhook(message) do
     case send_webhook_to_messaging_service(message) do
       {:ok, response} ->
-        Logger.info("Sent webhook message: #{message.body} (#{message.from} -> #{message.to})")
-        response
+        recipients = if is_list(message.to), do: Enum.join(message.to, ", "), else: message.to
+        Logger.info("Sent webhook message: #{message.body} (#{message.from} -> #{recipients})")
+        {:ok, response}
 
       {:error, reason} ->
         Logger.error("Failed to send webhook message: #{inspect(reason)}")

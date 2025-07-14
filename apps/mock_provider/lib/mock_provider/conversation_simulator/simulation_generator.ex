@@ -43,7 +43,7 @@ defmodule MockProvider.SimulationGenerator do
         gandalf: gandalf_phone,
         mouth_of_sauron: mouth_of_sauron_phone
       },
-      # Mouth of Sauron uses webhook (incoming threats), Gandalf/Aragorn uses API (outgoing responses)
+      # Gandalf uses API (outgoing responses), Mouth of Sauron uses webhook (incoming threats)
       messages: [
         %{from: gandalf_phone, to: mouth_of_sauron_phone, body: "*Aragorn shouting* Let the Lord of the Black Land come forth! Let justice be done upon him", delay: 0, endpoint: "api"},
         %{from: mouth_of_sauron_phone, to: gandalf_phone, body: "*black gate opens slowly* My master Sauron the Great bids thee welcome. Is there any in this rout with authority to treat with me?", delay: 3000, endpoint: "webhook"},
@@ -73,15 +73,15 @@ defmodule MockProvider.SimulationGenerator do
         egon: egon_phone,
         peter: peter_phone
       },
-      # Mixed endpoints to simulate group chat dynamics
+      # Group chat: Ray uses API, Egon and Peter use webhook
       messages: [
-        %{from: ray_phone, to: egon_phone, body: "You know, it just occurred to me, we haven't had a completely successful test of this equipment.", delay: 0, endpoint: "api"},
-        %{from: egon_phone, to: ray_phone, body: "I blame myself.", delay: 2000, endpoint: "webhook"},
-        %{from: peter_phone, to: egon_phone, body: "So do I.", delay: 1500, endpoint: "api"},
-        %{from: ray_phone, to: peter_phone, body: "No sense worrying about it now.", delay: 2500, endpoint: "webhook"},
-        %{from: peter_phone, to: ray_phone, body: "Why worry? Each of us is wearing an unlicensed nuclear accelerator on his back.", delay: 3000, endpoint: "api"},
-        %{from: ray_phone, to: egon_phone, body: "Yep. Let's get ready. Switch me on!", delay: 2000, endpoint: "webhook"},
-        %{from: egon_phone, to: ray_phone, body: "*charges RAY's proton pack, then backs away*", delay: 2500, endpoint: "api"}
+        %{from: ray_phone, to: [egon_phone, peter_phone], body: "You know, it just occurred to me, we haven't had a completely successful test of this equipment.", delay: 0, endpoint: "api"},
+        %{from: egon_phone, to: [ray_phone, peter_phone], body: "I blame myself.", delay: 2000, endpoint: "webhook"},
+        %{from: peter_phone, to: [ray_phone, egon_phone], body: "So do I.", delay: 1500, endpoint: "webhook"},
+        %{from: ray_phone, to: [egon_phone, peter_phone], body: "No sense worrying about it now.", delay: 2500, endpoint: "api"},
+        %{from: peter_phone, to: [ray_phone, egon_phone], body: "Why worry? Each of us is wearing an unlicensed nuclear accelerator on his back.", delay: 3000, endpoint: "webhook"},
+        %{from: ray_phone, to: [egon_phone, peter_phone], body: "Yep. Let's get ready. Switch me on!", delay: 2000, endpoint: "api"},
+        %{from: egon_phone, to: [ray_phone, peter_phone], body: "*charges RAY's proton pack, then backs away*", delay: 2500, endpoint: "webhook"}
       ]
     }
   end
