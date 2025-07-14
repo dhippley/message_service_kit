@@ -2538,6 +2538,10 @@ select {
   opacity: 0.5;
 }
 
+.opacity-90 {
+  opacity: 0.9;
+}
+
 .mix-blend-multiply {
   mix-blend-mode: multiply;
 }
@@ -2761,6 +2765,11 @@ select {
   --tw-gradient-to: #db2777 var(--tw-gradient-to-position);
 }
 
+.hover\:text-purple-300:hover {
+  --tw-text-opacity: 1;
+  color: rgb(216 180 254 / var(--tw-text-opacity));
+}
+
 .hover\:text-white:hover {
   --tw-text-opacity: 1;
   color: rgb(255 255 255 / var(--tw-text-opacity));
@@ -2774,6 +2783,10 @@ select {
 .hover\:text-zinc-900:hover {
   --tw-text-opacity: 1;
   color: rgb(24 24 27 / var(--tw-text-opacity));
+}
+
+.hover\:opacity-100:hover {
+  opacity: 1;
 }
 
 .hover\:opacity-40:hover {

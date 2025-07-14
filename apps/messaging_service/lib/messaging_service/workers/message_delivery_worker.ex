@@ -22,7 +22,7 @@ defmodule MessagingService.Workers.MessageDeliveryWorker do
   - `bounced` - Message bounced back
   """
 
-  use Oban.Worker, queue: :default, max_attempts: 3
+  use Oban.Worker, queue: :messaging, max_attempts: 3
 
   alias Ecto.Association.NotLoaded
   alias MessagingService.Messages

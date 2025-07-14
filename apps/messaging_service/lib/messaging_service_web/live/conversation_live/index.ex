@@ -18,6 +18,7 @@ defmodule MessagingServiceWeb.ConversationLive.Index do
      socket
      |> assign(:conversations, pagination.conversations)
      |> assign(:pagination, pagination)
+     |> assign(:current_path, "/conversations")
      |> assign(:page_title, "Conversations")}
   end
 

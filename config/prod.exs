@@ -21,7 +21,7 @@ config :messaging_service, Oban,
        # {"0 2 * * *", MyApp.DailyWorker}
      ]}
   ],
-  queues: [default: 10, mailers: 20, events: 50, media: 10]
+  queues: [default: 10, messaging: 25, mailers: 20, events: 50, media: 10]
 
 # Configure webhook authentication for production
 # Use environment variables for security

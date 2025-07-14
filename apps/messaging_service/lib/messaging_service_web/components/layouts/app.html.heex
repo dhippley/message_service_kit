@@ -16,7 +16,7 @@
       <div class="flex items-center justify-between py-4">
         <!-- Logo and Brand -->
         <div class="flex items-center gap-4">
-          <a href="/" class="group flex items-center gap-3">
+          <a href="/" class={"group flex items-center gap-3 #{if assigns[:current_path] == "/", do: "opacity-100", else: "opacity-90 hover:opacity-100"}"}>
             <!-- Cool messaging icon -->
             <div class="relative">
               <div class="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-purple-500/25 transition-all duration-300">
@@ -67,22 +67,30 @@
         <nav class="hidden md:flex items-center gap-6">
           <a
             href="/dashboard"
-            class="text-purple-300 hover:text-white transition-colors duration-200 font-medium"
+            class={"text-purple-300 hover:text-white transition-colors duration-200 font-medium #{if assigns[:current_path] == "/dashboard", do: "border-b-2 border-purple-400 pb-1 text-white", else: ""}"}
           >
             Dashboard
           </a>
-          <span class="text-gray-500 cursor-not-allowed font-medium opacity-50">
+          <a
+            href="/messages"
+            class={"transition-colors duration-200 font-medium #{if assigns[:current_path] && String.starts_with?(assigns.current_path, "/messages"), do: "text-white border-b-2 border-purple-400 pb-1", else: "text-gray-500 hover:text-purple-300 cursor-not-allowed opacity-50"}"}
+            title="Message management coming soon"
+          >
             Messages
-          </span>
+          </a>
           <a
             href="/conversations"
-            class="text-purple-300 hover:text-white transition-colors duration-200 font-medium border-b-2 border-purple-400 pb-1"
+            class={"text-purple-300 hover:text-white transition-colors duration-200 font-medium #{if assigns[:current_path] && String.starts_with?(assigns.current_path, "/conversations"), do: "border-b-2 border-purple-400 pb-1 text-white", else: ""}"}
           >
             Conversations
           </a>
-          <span class="text-gray-500 cursor-not-allowed font-medium opacity-50">
+          <a
+            href="/analytics"
+            class={"transition-colors duration-200 font-medium #{if assigns[:current_path] && String.starts_with?(assigns.current_path, "/analytics"), do: "text-white border-b-2 border-purple-400 pb-1", else: "text-gray-500 hover:text-purple-300 cursor-not-allowed opacity-50"}"}
+            title="Analytics dashboard coming soon"
+          >
             Analytics
-          </span>
+          </a>
         </nav>
         
 <!-- Action Buttons -->

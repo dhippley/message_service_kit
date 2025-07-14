@@ -17,6 +17,7 @@ defmodule MessagingServiceWeb.DashboardLive do
     socket =
       socket
       |> assign(:page_title, "Dashboard")
+      |> assign(:current_path, "/dashboard")
       |> assign(:loading, true)
       |> assign(:error, nil)
       |> load_initial_data()
