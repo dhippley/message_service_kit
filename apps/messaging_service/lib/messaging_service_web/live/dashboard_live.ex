@@ -67,6 +67,7 @@ defmodule MessagingServiceWeb.DashboardLive do
         |> assign(:error, nil)
         |> load_health_data()
         |> load_stress_test_data()
+        |> load_queue_data()
         |> load_trends_data(socket.assigns[:selected_timeframe] || "1h")
 
       {:error, reason} ->
@@ -103,6 +104,16 @@ defmodule MessagingServiceWeb.DashboardLive do
 
       {:error, _reason} ->
         assign(socket, :stress_tests, %{summary: %{}, recent_tests: []})
+    end
+  end
+
+  defp load_queue_data(socket) do
+    case fetch_queue_data() do
+      {:ok, queue_data} ->
+        assign(socket, :queue_metrics, queue_data)
+
+      {:error, _reason} ->
+        assign(socket, :queue_metrics, %{queues: %{}, summary: %{}, recent_jobs: []})
     end
   end
 
@@ -160,6 +171,18 @@ defmodule MessagingServiceWeb.DashboardLive do
     _error -> {:error, "Stress test fetch failed"}
   end
 
+  defp fetch_queue_data do
+    case Req.get("http://localhost:4000/api/telemetry/queue") do
+      {:ok, %{status: 200, body: body}} ->
+        {:ok, body}
+
+      {:error, _} ->
+        {:error, "Failed to fetch queue data"}
+    end
+  rescue
+    _error -> {:error, "Queue fetch failed"}
+  end
+
   # Helper functions for display
   defp format_number(number) when is_integer(number) do
     # Simple number formatting without external dependency
@@ -201,6 +224,28 @@ defmodule MessagingServiceWeb.DashboardLive do
   defp status_color("warning"), do: "text-yellow-400"
   defp status_color("error"), do: "text-red-400"
   defp status_color(_), do: "text-gray-400"
+
+  # Define the preferred order for status transitions
+  @transition_order [
+    "pending_to_queued",
+    "queued_to_processing",
+    "processing_to_sent",
+    "processing_to_failed"
+  ]
+
+  defp sort_status_transitions(status_transitions) when is_map(status_transitions) do
+    # Convert to list of tuples and sort by the predefined order
+    status_transitions
+    |> Enum.to_list()
+    |> Enum.sort_by(fn {transition, _metrics} ->
+      case Enum.find_index(@transition_order, &(&1 == transition)) do
+        nil -> 999  # Unknown transitions go to the end
+        index -> index
+      end
+    end)
+  end
+
+  defp sort_status_transitions(_), do: []
 
   defp transition_badge_color(transition) do
     case transition do
@@ -250,4 +295,47 @@ defmodule MessagingServiceWeb.DashboardLive do
   defp stress_test_status_color(true), do: "text-green-400"
   defp stress_test_status_color(false), do: "text-red-400"
   defp stress_test_status_color(_), do: "text-gray-400"
+
+  # Queue-specific helper functions
+  defp queue_health_color("healthy"), do: "text-green-400"
+  defp queue_health_color("warning"), do: "text-yellow-400"
+  defp queue_health_color("unhealthy"), do: "text-red-400"
+  defp queue_health_color(_), do: "text-gray-400"
+
+  defp queue_status_color(queue) when is_map(queue) do
+    executing = queue["executing"] || 0
+    limit = queue["limit"] || 1
+    retryable = queue["retryable"] || 0
+
+    utilization = executing / limit
+
+    cond do
+      retryable > 10 -> "border-red-500/30 bg-red-500/10"
+      utilization > 0.8 -> "border-yellow-500/30 bg-yellow-500/10"
+      utilization > 0.5 -> "border-blue-500/30 bg-blue-500/10"
+      true -> "border-green-500/30 bg-green-500/10"
+    end
+  end
+
+  defp queue_status_color(_), do: "border-gray-500/30 bg-gray-500/10"
+
+  defp job_state_color("available"), do: "text-blue-400"
+  defp job_state_color("executing"), do: "text-orange-400"
+  defp job_state_color("retryable"), do: "text-yellow-400"
+  defp job_state_color("scheduled"), do: "text-purple-400"
+  defp job_state_color("completed"), do: "text-green-400"
+  defp job_state_color("discarded"), do: "text-red-400"
+  defp job_state_color(_), do: "text-gray-400"
+
+  defp format_queue_name(queue_name) when is_atom(queue_name), do: queue_name |> Atom.to_string() |> String.capitalize()
+  defp format_queue_name(queue_name) when is_binary(queue_name), do: String.capitalize(queue_name)
+  defp format_queue_name(_), do: "Unknown"
+
+  defp format_worker_name(worker) when is_binary(worker) do
+    worker
+    |> String.split(".")
+    |> List.last()
+    |> String.replace("Worker", "")
+  end
+  defp format_worker_name(_), do: "Unknown"
 end

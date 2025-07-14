@@ -57,6 +57,7 @@ defmodule MessagingServiceWeb.Router do
     get "/telemetry/messages/:type", TelemetryController, :message_type_metrics
     get "/telemetry/stress-tests", TelemetryController, :stress_test_metrics
     get "/telemetry/trends", TelemetryController, :performance_trends
+    get "/telemetry/queue", TelemetryController, :queue_metrics
     get "/telemetry/realtime", TelemetryController, :realtime_info
   end
 

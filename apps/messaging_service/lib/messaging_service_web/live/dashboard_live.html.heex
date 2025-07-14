@@ -156,7 +156,7 @@
       <div class="bg-gray-800/30 backdrop-blur-sm rounded-lg p-6 border border-gray-700/50">
         <h3 class="text-lg font-semibold text-white mb-4">Status Transitions</h3>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <%= for {transition, metrics} <- @overview["status_transitions"] do %>
+          <%= for {transition, metrics} <- sort_status_transitions(@overview["status_transitions"]) do %>
             <div class={"p-4 rounded-lg border #{transition_badge_color(transition)}"}>
               <div class="text-sm font-medium mb-2">
                 <%= transition_label(transition) %>
@@ -215,40 +215,6 @@
             </div>
           <% end %>
         </div>
-      </div>
-    <% end %>
-
-    <!-- Trends Chart Placeholder -->
-    <%= if assigns[:trends] && @trends != %{} do %>
-      <div class="bg-gray-800/30 backdrop-blur-sm rounded-lg p-6 border border-gray-700/50">
-        <h3 class="text-lg font-semibold text-white mb-4">Performance Trends (<%= @selected_timeframe %>)</h3>
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <!-- Throughput Trend -->
-          <div class="p-4 rounded-lg bg-gray-700/30">
-            <h4 class="text-white font-medium mb-3">Throughput</h4>
-            <div class="text-sm text-gray-400 mb-2">Messages per hour over time</div>
-            <!-- Placeholder for chart - in a real app you'd use a charting library -->
-            <div class="h-32 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded flex items-center justify-center">
-              <span class="text-gray-400 text-sm">Chart visualization would go here</span>
-            </div>
-          </div>
-
-          <!-- Latency Trend -->
-          <div class="p-4 rounded-lg bg-gray-700/30">
-            <h4 class="text-white font-medium mb-3">Latency</h4>
-            <div class="text-sm text-gray-400 mb-2">P95 latency over time</div>
-            <div class="h-32 bg-gradient-to-r from-green-500/20 to-blue-500/20 rounded flex items-center justify-center">
-              <span class="text-gray-400 text-sm">Chart visualization would go here</span>
-            </div>
-          </div>
-        </div>
-        
-        <!-- Recent trend data -->
-        <%= if length(@trends["metrics"]["throughput"]) > 0 do %>
-          <div class="mt-4 text-xs text-gray-400">
-            Latest data point: <%= List.first(@trends["metrics"]["throughput"])["messages_per_hour"] %> messages/hour
-          </div>
-        <% end %>
       </div>
     <% end %>
 
@@ -326,6 +292,128 @@
             </svg>
             <p class="text-gray-400 text-sm">No stress test data available</p>
             <p class="text-gray-500 text-xs mt-1">Run stress tests to see performance metrics</p>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+
+    <!-- Queue Metrics -->
+    <%= if assigns[:queue_metrics] && @queue_metrics != %{} do %>
+      <div class="bg-gray-800/30 backdrop-blur-sm rounded-lg p-6 border border-gray-700/50">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-semibold text-white">Oban Queue Status</h3>
+          <span class={"text-sm font-medium #{queue_health_color(@queue_metrics["summary"]["queue_health"] || "unknown")}"}>
+            <%= String.upcase(@queue_metrics["summary"]["queue_health"] || "unknown") %>
+          </span>
+        </div>
+        
+        <!-- Queue Summary -->
+        <%= if @queue_metrics["summary"] && @queue_metrics["summary"] != %{} do %>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div class="p-4 rounded-lg bg-blue-500/10 border border-blue-500/20">
+              <p class="text-blue-300 text-sm font-medium">Total Queued</p>
+              <p class="text-white text-xl font-bold"><%= format_number(@queue_metrics["summary"]["total_queued"]) %></p>
+            </div>
+            <div class="p-4 rounded-lg bg-orange-500/10 border border-orange-500/20">
+              <p class="text-orange-300 text-sm font-medium">Executing</p>
+              <p class="text-white text-xl font-bold"><%= format_number(@queue_metrics["summary"]["total_executing"]) %></p>
+            </div>
+            <div class="p-4 rounded-lg bg-purple-500/10 border border-purple-500/20">
+              <p class="text-purple-300 text-sm font-medium">Scheduled</p>
+              <p class="text-white text-xl font-bold"><%= format_number(@queue_metrics["summary"]["total_scheduled"]) %></p>
+            </div>
+            <div class="p-4 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
+              <p class="text-yellow-300 text-sm font-medium">Retryable</p>
+              <p class="text-white text-xl font-bold"><%= format_number(@queue_metrics["summary"]["total_retryable"]) %></p>
+            </div>
+          </div>
+        <% end %>
+
+        <!-- Individual Queue Status -->
+        <%= if @queue_metrics["queues"] && @queue_metrics["queues"] != %{} do %>
+          <div class="mb-6">
+            <h4 class="text-white font-medium mb-3">Queue Details</h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <%= for {queue_name, queue_data} <- @queue_metrics["queues"] do %>
+                <div class={"p-4 rounded-lg border #{queue_status_color(queue_data)}"}>
+                  <div class="flex items-center justify-between mb-3">
+                    <h5 class="text-white font-medium"><%= format_queue_name(queue_name) %></h5>
+                    <span class="text-xs text-gray-400">
+                      <%= queue_data["executing"] || 0 %>/<%= queue_data["limit"] || 0 %>
+                    </span>
+                  </div>
+                  <div class="grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <span class="text-gray-400">Available:</span>
+                      <p class="text-white"><%= queue_data["available"] || 0 %></p>
+                    </div>
+                    <div>
+                      <span class="text-gray-400">Executing:</span>
+                      <p class="text-orange-400"><%= queue_data["executing"] || 0 %></p>
+                    </div>
+                    <div>
+                      <span class="text-gray-400">Retryable:</span>
+                      <p class="text-yellow-400"><%= queue_data["retryable"] || 0 %></p>
+                    </div>
+                    <div>
+                      <span class="text-gray-400">Scheduled:</span>
+                      <p class="text-purple-400"><%= queue_data["scheduled"] || 0 %></p>
+                    </div>
+                  </div>
+                  <div class="mt-3 text-xs text-gray-500">
+                    Completed today: <%= queue_data["completed_today"] || 0 %> | 
+                    Failed: <%= queue_data["failed_today"] || 0 %>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+
+        <!-- Recent Jobs -->
+        <%= if @queue_metrics["recent_jobs"] && length(@queue_metrics["recent_jobs"]) > 0 do %>
+          <div>
+            <h4 class="text-white font-medium mb-3">Recent Jobs</h4>
+            <div class="space-y-3 max-h-64 overflow-y-auto custom-scrollbar">
+              <%= for job <- Enum.take(@queue_metrics["recent_jobs"], 5) do %>
+                <div class="p-3 rounded-lg bg-gray-700/30 border border-gray-600/50">
+                  <div class="flex items-center justify-between mb-2">
+                    <span class="text-sm font-medium text-white">
+                      <%= format_worker_name(job["worker"]) %>
+                    </span>
+                    <span class={"text-xs font-medium #{job_state_color(job["state"])}"}>
+                      <%= String.upcase(job["state"] || "unknown") %>
+                    </span>
+                  </div>
+                  <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                    <div>
+                      <span class="text-gray-400">Queue:</span>
+                      <p class="text-white"><%= job["queue"] %></p>
+                    </div>
+                    <div>
+                      <span class="text-gray-400">Attempt:</span>
+                      <p class="text-white"><%= job["attempt"] %>/<%= job["max_attempts"] %></p>
+                    </div>
+                    <div>
+                      <span class="text-gray-400">Inserted:</span>
+                      <p class="text-white"><%= format_timestamp(job["inserted_at"]) %></p>
+                    </div>
+                    <div>
+                      <span class="text-gray-400">ID:</span>
+                      <p class="text-white">#<%= job["id"] %></p>
+                    </div>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        <% else %>
+          <div class="text-center py-8">
+            <svg class="w-12 h-12 text-gray-600 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+            </svg>
+            <p class="text-gray-400 text-sm">No queue jobs available</p>
+            <p class="text-gray-500 text-xs mt-1">Queue appears to be empty or all jobs are processed</p>
           </div>
         <% end %>
       </div>
