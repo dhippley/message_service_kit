@@ -699,12 +699,24 @@ defmodule MessagingService.Messages do
   end
 
   defp find_or_create_conversation_for_message(attrs) do
-    # Extracting sender and recipient from attrs
+    # Extracting sender and recipient(s) from attrs
     from = attrs[:from] || attrs["from"]
     to = attrs[:to] || attrs["to"]
 
-    # Use the Conversations context to find or create the conversation
-    Conversations.find_or_create_conversation(from, to)
+    # Handle both single recipient (string) and multiple recipients (list)
+    case to do
+      to_string when is_binary(to_string) ->
+        # Direct conversation with single recipient
+        Conversations.find_or_create_conversation(from, to_string)
+
+      to_list when is_list(to_list) ->
+        # Group conversation with multiple recipients
+        all_participants = [from | to_list] |> Enum.uniq() |> Enum.sort()
+        Conversations.find_or_create_group_conversation(all_participants)
+
+      _ ->
+        {:error, "Invalid recipient format"}
+    end
   end
 
   defp update_conversation_for_new_message(conversation, message) do

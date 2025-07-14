@@ -40,11 +40,13 @@ defmodule MessagingServiceWeb.ConversationComponent do
     ~H"""
     <div class={[
       "backdrop-blur-sm bg-white/10 border border-white/20 rounded-2xl shadow-xl transition-all duration-300 group overflow-hidden relative",
-      @clickable && "hover:bg-white/15 hover:border-white/30 hover:shadow-2xl hover:scale-[1.02] cursor-pointer transform",
+      @clickable &&
+        "hover:bg-white/15 hover:border-white/30 hover:shadow-2xl hover:scale-[1.02] cursor-pointer transform",
       @class
     ]}>
       <!-- Gradient overlay for extra visual interest -->
-      <div class="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+      <div class="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+      </div>
 
       <div class="relative p-6">
         <!-- Header with participants -->
@@ -70,8 +72,8 @@ defmodule MessagingServiceWeb.ConversationComponent do
               </p>
             <% end %>
           </div>
-
-          <!-- Status badge -->
+          
+    <!-- Status badge -->
           <div class={[
             "ml-4 flex-shrink-0 px-3 py-1.5 text-xs font-semibold rounded-full border",
             conversation_status_class(@conversation.messages)
@@ -79,8 +81,8 @@ defmodule MessagingServiceWeb.ConversationComponent do
             {conversation_status_text(@conversation)}
           </div>
         </div>
-
-        <!-- Conversation metadata -->
+        
+    <!-- Conversation metadata -->
         <div class="flex items-center justify-between text-sm text-gray-400 mb-4">
           <div class="flex items-center">
             <.icon name="hero-clock" class="w-4 h-4 mr-2 text-purple-400" />
@@ -98,12 +100,11 @@ defmodule MessagingServiceWeb.ConversationComponent do
             navigate={~p"/conversations/#{@conversation.id}"}
             class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/30 rounded-lg hover:from-purple-500/30 hover:to-pink-500/30 hover:border-purple-400/50 transition-all duration-200 w-full justify-center group-hover:scale-105"
           >
-            View Conversation
-            <.icon name="hero-arrow-right" class="w-4 h-4 ml-2" />
+            View Conversation <.icon name="hero-arrow-right" class="w-4 h-4 ml-2" />
           </.link>
         <% end %>
-
-        <!-- Recent messages preview -->
+        
+    <!-- Recent messages preview -->
         <%= if @show_messages && has_loaded_messages?(@conversation) do %>
           <div class="mt-6 pt-4 border-t border-white/10">
             <h4 class="text-xs font-semibold text-gray-300 mb-3 flex items-center">

@@ -2,12 +2,15 @@
 <div class="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
   <!-- Animated background particles -->
   <div class="absolute inset-0 overflow-hidden">
-    <div class="absolute -top-40 -right-32 w-80 h-80 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob"></div>
-    <div class="absolute -bottom-40 -left-32 w-80 h-80 bg-blue-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-2000"></div>
-    <div class="absolute top-40 left-40 w-80 h-80 bg-pink-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-4000"></div>
+    <div class="absolute -top-40 -right-32 w-80 h-80 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob">
+    </div>
+    <div class="absolute -bottom-40 -left-32 w-80 h-80 bg-blue-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-2000">
+    </div>
+    <div class="absolute top-40 left-40 w-80 h-80 bg-pink-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-4000">
+    </div>
   </div>
-
-  <!-- Navigation Header -->
+  
+<!-- Navigation Header -->
   <header class="relative z-10 backdrop-blur-sm bg-white/5 border-b border-white/10">
     <div class="px-4 sm:px-6 lg:px-8">
       <div class="flex items-center justify-between py-4">
@@ -17,12 +20,24 @@
             <!-- Cool messaging icon -->
             <div class="relative">
               <div class="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-purple-500/25 transition-all duration-300">
-                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                <svg
+                  class="w-6 h-6 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                  >
+                  </path>
                 </svg>
               </div>
               <!-- Notification dot -->
-              <div class="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full border-2 border-slate-900 animate-pulse"></div>
+              <div class="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full border-2 border-slate-900 animate-pulse">
+              </div>
             </div>
             <div>
               <h1 class="text-xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
@@ -32,18 +47,23 @@
             </div>
           </a>
           
-          <!-- Version Badge -->
+<!-- Version Badge -->
           <div class="hidden sm:block">
             <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-500/20 text-purple-200 border border-purple-500/30">
               <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                <path
+                  fill-rule="evenodd"
+                  d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                  clip-rule="evenodd"
+                >
+                </path>
               </svg>
               v{Application.spec(:phoenix, :vsn)}
             </span>
           </div>
         </div>
-
-        <!-- Navigation Links -->
+        
+<!-- Navigation Links -->
         <nav class="hidden md:flex items-center gap-6">
           <span class="text-gray-500 cursor-not-allowed font-medium opacity-50">
             Dashboard
@@ -51,26 +71,54 @@
           <span class="text-gray-500 cursor-not-allowed font-medium opacity-50">
             Messages
           </span>
-          <a href="/conversations" class="text-purple-300 hover:text-white transition-colors duration-200 font-medium border-b-2 border-purple-400 pb-1">
+          <a
+            href="/conversations"
+            class="text-purple-300 hover:text-white transition-colors duration-200 font-medium border-b-2 border-purple-400 pb-1"
+          >
             Conversations
           </a>
           <span class="text-gray-500 cursor-not-allowed font-medium opacity-50">
             Analytics
           </span>
         </nav>
-
-        <!-- Action Buttons -->
+        
+<!-- Action Buttons -->
         <div class="flex items-center gap-3">
-          <button class="hidden sm:inline-flex items-center justify-center w-10 h-10 rounded-lg text-sm font-medium text-white bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-400 hover:to-orange-400 shadow-lg hover:shadow-yellow-500/25 transition-all duration-200 transform hover:scale-105" title="Let's party! 🎉">
+          <button
+            class="hidden sm:inline-flex items-center justify-center w-10 h-10 rounded-lg text-sm font-medium text-white bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-400 hover:to-orange-400 shadow-lg hover:shadow-yellow-500/25 transition-all duration-200 transform hover:scale-105"
+            title="Let's party! 🎉"
+          >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"></path>
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.879 16.121A3 3 0 1012.015 11L11 14l4 4-6.121-1.879z"></path>
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"
+              >
+              </path>
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9.879 16.121A3 3 0 1012.015 11L11 14l4 4-6.121-1.879z"
+              >
+              </path>
             </svg>
           </button>
-          
-          <button disabled class="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium text-gray-400 bg-gray-700/50 cursor-not-allowed opacity-50 shadow-none" title="Message composition not implemented yet">
+
+          <button
+            disabled
+            class="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium text-gray-400 bg-gray-700/50 cursor-not-allowed opacity-50 shadow-none"
+            title="Message composition not implemented yet"
+          >
             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+              >
+              </path>
             </svg>
             New Message
           </button>
@@ -78,8 +126,8 @@
       </div>
     </div>
   </header>
-
-  <!-- Main Content Area -->
+  
+<!-- Main Content Area -->
   <main class="relative z-10">
     <div class="px-4 py-8 sm:px-6 lg:px-8">
       <div class="mx-auto max-w-7xl">
@@ -88,7 +136,7 @@
           <.flash_group flash={@flash} />
         </div>
         
-        <!-- Content Container -->
+<!-- Content Container -->
         <div class="backdrop-blur-sm bg-white/5 rounded-2xl border border-white/10 shadow-2xl">
           <div class="p-6 sm:p-8">
             {@inner_content}
@@ -115,7 +163,7 @@
   .animation-delay-4000 {
     animation-delay: 4s;
   }
-  
+
   /* Custom scrollbar for dark theme */
   .custom-scrollbar::-webkit-scrollbar {
     width: 6px;

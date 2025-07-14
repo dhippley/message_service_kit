@@ -100,8 +100,9 @@ defmodule MessagingService.Provider do
 
   @doc """
   Validates a phone number format for SMS/MMS.
+  Supports both individual phone numbers (strings) and lists of phone numbers for group messaging.
   """
-  @spec validate_phone_number(String.t()) :: validation_result()
+  @spec validate_phone_number(String.t() | [String.t()]) :: validation_result()
   def validate_phone_number(phone) when is_binary(phone) do
     # More lenient phone number validation - allow various formats
     cleaned = String.replace(phone, ~r/\s|-|\(|\)/, "")
@@ -117,7 +118,27 @@ defmodule MessagingService.Provider do
     end
   end
 
-  def validate_phone_number(_), do: {:error, "Phone number must be a string"}
+  def validate_phone_number(phone_list) when is_list(phone_list) do
+    # Validate that all elements in the list are valid phone numbers
+    case Enum.find(phone_list, fn phone ->
+           case validate_phone_number(phone) do
+             :ok -> false
+             {:error, _} -> true
+           end
+         end) do
+      # All phone numbers are valid
+      nil ->
+        :ok
+
+      invalid_phone ->
+        case validate_phone_number(invalid_phone) do
+          {:error, reason} -> {:error, reason}
+          _ -> {:error, "Invalid phone number in list"}
+        end
+    end
+  end
+
+  def validate_phone_number(_), do: {:error, "Phone number must be a string or list of strings"}
 
   @doc """
   Validates an email address format.

@@ -53,10 +53,13 @@ defmodule MockProvider.Router do
 
     conn
     |> put_resp_content_type("application/json")
-    |> send_resp(200, Jason.encode!(%{
-      status: "success",
-      scenarios: scenarios
-    }))
+    |> send_resp(
+      200,
+      Jason.encode!(%{
+        status: "success",
+        scenarios: scenarios
+      })
+    )
   end
 
   # Health check

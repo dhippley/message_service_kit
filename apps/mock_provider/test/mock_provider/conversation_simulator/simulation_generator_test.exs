@@ -118,6 +118,7 @@ defmodule MockProvider.SimulationGeneratorTest do
         scenario.participants.egon,
         scenario.participants.peter
       ]
+
       assert length(Enum.uniq(phones)) == 3
     end
 

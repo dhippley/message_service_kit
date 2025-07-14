@@ -6,10 +6,9 @@
         navigate={~p"/conversations"}
         class="inline-flex items-center text-sm font-medium text-purple-300 hover:text-white transition-colors duration-200 mb-4"
       >
-        <.icon name="hero-arrow-left" class="w-4 h-4 mr-2" />
-        Back to Conversations
+        <.icon name="hero-arrow-left" class="w-4 h-4 mr-2" /> Back to Conversations
       </.link>
-      
+
       <h1 class="text-4xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent mb-2">
         Conversation Details
       </h1>
@@ -20,20 +19,26 @@
       </div>
     </div>
     
-    <!-- Action buttons -->
+<!-- Action buttons -->
     <div class="flex items-center gap-3">
-      <button disabled class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-400 bg-gray-700/50 rounded-lg cursor-not-allowed opacity-50" title="Reply not implemented yet">
-        <.icon name="hero-arrow-uturn-left" class="w-4 h-4 mr-2" />
-        Reply
+      <button
+        disabled
+        class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-400 bg-gray-700/50 rounded-lg cursor-not-allowed opacity-50"
+        title="Reply not implemented yet"
+      >
+        <.icon name="hero-arrow-uturn-left" class="w-4 h-4 mr-2" /> Reply
       </button>
-      <button disabled class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-400 bg-gray-700/50 rounded-lg cursor-not-allowed opacity-50" title="Archive not implemented yet">
-        <.icon name="hero-archive-box" class="w-4 h-4 mr-2" />
-        Archive
+      <button
+        disabled
+        class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-400 bg-gray-700/50 rounded-lg cursor-not-allowed opacity-50"
+        title="Archive not implemented yet"
+      >
+        <.icon name="hero-archive-box" class="w-4 h-4 mr-2" /> Archive
       </button>
     </div>
   </div>
-
-  <!-- Conversation detail -->
+  
+<!-- Conversation detail -->
   <div class="max-w-4xl">
     <.live_component
       module={MessagingServiceWeb.ConversationComponent}

@@ -379,4 +379,65 @@ defmodule MessagingService.Conversations do
       conversation -> {:ok, conversation}
     end
   end
+
+  @doc """
+  Finds or creates a group conversation with multiple participants.
+
+  ## Examples
+
+      iex> find_or_create_group_conversation(["alice@example.com", "bob@example.com", "charlie@example.com"])
+      {:ok, %Conversation{}}
+
+  """
+  def find_or_create_group_conversation(participants) when is_list(participants) do
+    # Sort participants for consistent lookup
+    sorted_participants = participants |> Enum.uniq() |> Enum.sort()
+
+    case get_group_conversation_by_participants(sorted_participants) do
+      nil ->
+        create_group_conversation(%{participants: sorted_participants})
+
+      conversation ->
+        {:ok, conversation}
+    end
+  end
+
+  @doc """
+  Gets a group conversation by participants.
+
+  ## Examples
+
+      iex> get_group_conversation_by_participants(["alice@example.com", "bob@example.com", "charlie@example.com"])
+      %Conversation{}
+
+      iex> get_group_conversation_by_participants(["nonexistent1", "nonexistent2"])
+      nil
+
+  """
+  def get_group_conversation_by_participants(participants) when is_list(participants) do
+    # Sort participants for consistent lookup
+    sorted_participants = participants |> Enum.uniq() |> Enum.sort()
+
+    Conversation
+    |> where([c], c.conversation_type == "group" and c.participants == ^sorted_participants)
+    |> Repo.one()
+  end
+
+  @doc """
+  Creates a group conversation.
+
+  ## Examples
+
+      iex> create_group_conversation(%{participants: ["alice@example.com", "bob@example.com", "charlie@example.com"]})
+      {:ok, %Conversation{}}
+
+      iex> create_group_conversation(%{participants: ["alice@example.com"]})
+      {:error, %Ecto.Changeset{}}
+
+  """
+  def create_group_conversation(attrs \\ %{}) do
+    %Conversation{}
+    |> Conversation.group_changeset(attrs)
+    |> Repo.insert()
+  end
 end

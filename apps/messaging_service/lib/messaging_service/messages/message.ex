@@ -17,7 +17,7 @@ defmodule MessagingService.Message do
 
   @type t :: %__MODULE__{
           id: binary() | nil,
-          to: String.t() | nil,
+          to: String.t() | [String.t()] | nil,
           from: String.t() | nil,
           type: String.t() | nil,
           body: String.t() | nil,
@@ -35,7 +35,7 @@ defmodule MessagingService.Message do
   @foreign_key_type :binary_id
 
   schema "messages" do
-    field :to, :string
+    field :to, MessagingService.EctoTypes.PhoneList
     field :from, :string
     field :type, :string
     field :body, :string
@@ -177,9 +177,13 @@ defmodule MessagingService.Message do
   end
 
   defp validate_phone_number(changeset, field) do
-    changeset
-    |> validate_format(field, ~r/^\+?[1-9]\d{1,14}$/, message: "must be a valid phone number")
-    |> validate_length(field, min: 10, max: 15)
+    # Custom validation for phone numbers that can be strings or lists
+    validate_change(changeset, field, fn field, value ->
+      case MessagingService.Provider.validate_phone_number(value) do
+        :ok -> []
+        {:error, reason} -> [{field, reason}]
+      end
+    end)
   end
 
   defp validate_email_address(changeset, field) do
