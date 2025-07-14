@@ -56,4 +56,33 @@ defmodule MockProvider.SimulationGenerator do
       ]
     }
   end
+
+  @doc """
+  Generates the classic Ghostbusters elevator scene dialogue about untested equipment.
+  """
+  def generate_ghostbusters_elevator_scenario do
+    # Generate random phone numbers for the participants
+    ray_phone = ChaosGenerator.generate_random_phone()
+    egon_phone = ChaosGenerator.generate_random_phone()
+    peter_phone = ChaosGenerator.generate_random_phone()
+
+    %{
+      name: "ghostbusters_elevator",
+      participants: %{
+        ray: ray_phone,
+        egon: egon_phone,
+        peter: peter_phone
+      },
+      # Mixed endpoints to simulate group chat dynamics
+      messages: [
+        %{from: ray_phone, to: egon_phone, body: "You know, it just occurred to me, we haven't had a completely successful test of this equipment.", delay: 0, endpoint: "api"},
+        %{from: egon_phone, to: ray_phone, body: "I blame myself.", delay: 2000, endpoint: "webhook"},
+        %{from: peter_phone, to: egon_phone, body: "So do I.", delay: 1500, endpoint: "api"},
+        %{from: ray_phone, to: peter_phone, body: "No sense worrying about it now.", delay: 2500, endpoint: "webhook"},
+        %{from: peter_phone, to: ray_phone, body: "Why worry? Each of us is wearing an unlicensed nuclear accelerator on his back.", delay: 3000, endpoint: "api"},
+        %{from: ray_phone, to: egon_phone, body: "Yep. Let's get ready. Switch me on!", delay: 2000, endpoint: "webhook"},
+        %{from: egon_phone, to: ray_phone, body: "*charges RAY's proton pack, then backs away*", delay: 2500, endpoint: "api"}
+      ]
+    }
+  end
 end
