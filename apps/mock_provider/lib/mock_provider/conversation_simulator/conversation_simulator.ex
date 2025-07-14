@@ -89,6 +89,9 @@ defmodule MockProvider.ConversationSimulator do
       "lotr_black_gate" ->
         {:ok, SimulationGenerator.generate_lotr_black_gate_scenario()}
 
+      "ghostbusters_elevator" ->
+        {:ok, SimulationGenerator.generate_ghostbusters_elevator_scenario()}
+
       _ ->
         case Enum.find(@default_conversation_scenarios, &(&1.name == scenario_name)) do
           nil -> {:error, "Scenario '#{scenario_name}' not found"}
@@ -210,14 +213,25 @@ defmodule MockProvider.ConversationSimulator do
     Enum.map(@default_conversation_scenarios, fn scenario ->
       %{
         name: scenario.name,
-        participants: scenario.participants,
-        message_count: length(scenario.messages),
+        participants: get_scenario_participants(scenario.name),
+        message_count: get_scenario_message_count(scenario.name),
         description: get_scenario_description(scenario.name)
       }
     end)
   end
 
+  defp get_scenario_participants("chaos"), do: ["Random phone numbers"]
+  defp get_scenario_participants("lotr_black_gate"), do: ["+15551234567", "+15551234568"]
+  defp get_scenario_participants("ghostbusters_elevator"), do: ["+15551234567", "+15551234568", "+15551234569"]
+  defp get_scenario_participants(_), do: ["Unknown"]
+
+  defp get_scenario_message_count("chaos"), do: "5-10 random messages"
+  defp get_scenario_message_count("lotr_black_gate"), do: 8
+  defp get_scenario_message_count("ghostbusters_elevator"), do: 7
+  defp get_scenario_message_count(_), do: "Variable"
+
   defp get_scenario_description("chaos"), do: "Random participants having a conversation with completely random word combinations"
   defp get_scenario_description("lotr_black_gate"), do: "Epic dialogue between Aragorn and the Mouth of Sauron at the Black Gate of Mordor"
+  defp get_scenario_description("ghostbusters_elevator"), do: "Classic Ghostbusters elevator scene about untested proton pack equipment"
   defp get_scenario_description(_), do: "Custom conversation scenario"
 end
