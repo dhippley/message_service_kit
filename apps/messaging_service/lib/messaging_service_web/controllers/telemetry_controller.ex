@@ -245,37 +245,28 @@ defmodule MessagingServiceWeb.TelemetryController do
   # In a real implementation, these would query your metrics storage system
 
   defp get_counter_value(_metric_name) do
-    # Placeholder - would query actual metrics storage
-    :rand.uniform(1000) + 500
+    # Get actual total messages processed from telemetry collector
+    MessagingServiceWeb.TelemetryCollector.get_total_messages_processed()
   end
 
   defp get_summary_value(_metric_name, _statistic) do
-    # Placeholder - would return actual summary statistics
-    :rand.uniform(2000) + 100
+    # Get actual average processing time from telemetry collector
+    MessagingServiceWeb.TelemetryCollector.get_average_processing_time()
   end
 
   defp calculate_success_rate do
-    # Placeholder calculation
-    85.5 + :rand.uniform() * 10
+    # Get actual success rate from telemetry collector
+    MessagingServiceWeb.TelemetryCollector.get_success_rate()
   end
 
-  defp get_transition_metrics(_from_status, _to_status) do
-    %{
-      count: :rand.uniform(100) + 10,
-      avg_duration_ms: :rand.uniform(1000) + 50,
-      p95_duration_ms: :rand.uniform(2000) + 200,
-      p99_duration_ms: :rand.uniform(3000) + 500
-    }
+  defp get_transition_metrics(from_status, to_status) do
+    # Get actual transition metrics from telemetry collector
+    MessagingServiceWeb.TelemetryCollector.get_transition_metrics(from_status, to_status)
   end
 
-  defp get_metrics_by_type(_message_type) do
-    %{
-      total_count: :rand.uniform(500) + 50,
-      success_count: :rand.uniform(450) + 40,
-      failure_count: :rand.uniform(50) + 5,
-      avg_processing_time_ms: :rand.uniform(1500) + 100,
-      success_rate: 85.0 + :rand.uniform() * 10
-    }
+  defp get_metrics_by_type(message_type) do
+    # Get actual metrics by type from telemetry collector
+    MessagingServiceWeb.TelemetryCollector.get_metrics_by_type(message_type)
   end
 
   defp get_detailed_metrics_by_type(message_type) do
@@ -295,16 +286,18 @@ defmodule MessagingServiceWeb.TelemetryController do
   end
 
   defp get_provider_breakdown(message_type) do
+    # TODO: Implement provider-specific metrics collection
+    # For now, return zero counts for known providers
     case message_type do
       "sms" ->
         %{
-          "twilio" => %{count: 150, success_rate: 95.2},
-          "aws_sns" => %{count: 89, success_rate: 92.1}
+          "twilio" => %{count: 0, success_rate: 0},
+          "aws_sns" => %{count: 0, success_rate: 0}
         }
       "email" ->
         %{
-          "sendgrid" => %{count: 234, success_rate: 97.8},
-          "aws_ses" => %{count: 156, success_rate: 96.1}
+          "sendgrid" => %{count: 0, success_rate: 0},
+          "aws_ses" => %{count: 0, success_rate: 0}
         }
       _ ->
         %{}
@@ -312,39 +305,33 @@ defmodule MessagingServiceWeb.TelemetryController do
   end
 
   defp get_hourly_trends(_message_type) do
-    # Generate 24 hours of sample data
+    # TODO: Implement actual hourly trends from telemetry collector
+    # For now, return 24 hours of zero data
     for hour <- 0..23 do
       %{
         hour: hour,
-        count: :rand.uniform(50) + 10,
-        avg_duration_ms: :rand.uniform(500) + 100,
-        success_rate: 85.0 + :rand.uniform() * 10
+        count: 0,
+        avg_duration_ms: 0,
+        success_rate: 0
       }
     end
   end
 
   defp get_recent_activity_summary do
-    %{
-      last_5_minutes: %{
-        messages_processed: :rand.uniform(20) + 5,
-        avg_processing_time_ms: :rand.uniform(800) + 200,
-        errors: :rand.uniform(3)
-      },
-      last_hour: %{
-        messages_processed: :rand.uniform(200) + 50,
-        avg_processing_time_ms: :rand.uniform(1000) + 150,
-        errors: :rand.uniform(15) + 2
-      }
-    }
+    # Get actual recent activity from telemetry collector
+    MessagingServiceWeb.TelemetryCollector.get_recent_activity_summary()
   end
 
   defp count_attached_handlers do
-    # Would count actual telemetry handlers
-    7
+    # Count actual telemetry handlers
+    :telemetry.list_handlers([])
+    |> Enum.filter(fn %{id: id} -> is_binary(id) and String.contains?(id, "messaging") end)
+    |> length()
   end
 
   defp get_events_processed_count do
-    :rand.uniform(1000) + 100
+    # Get actual events processed from telemetry collector
+    MessagingServiceWeb.TelemetryCollector.get_total_messages_processed()
   end
 
   defp get_vm_memory do
@@ -372,46 +359,53 @@ defmodule MessagingServiceWeb.TelemetryController do
   end
 
   defp get_throughput_trend(_timeframe) do
-    # Generate sample trend data
+    # TODO: Generate actual trend data from telemetry storage
+    # For now, return 24 hours of zero data
     for i <- 1..24 do
       %{
         timestamp: DateTime.add(DateTime.utc_now(), -i * 3600, :second),
-        messages_per_hour: :rand.uniform(200) + 50,
-        bytes_per_hour: :rand.uniform(50000) + 10000
+        messages_per_hour: 0,
+        bytes_per_hour: 0
       }
     end
   end
 
   defp get_latency_trend(_timeframe) do
+    # TODO: Generate actual latency trends from telemetry data
+    # For now, return 24 hours of zero data
     for i <- 1..24 do
       %{
         timestamp: DateTime.add(DateTime.utc_now(), -i * 3600, :second),
-        p50_ms: :rand.uniform(500) + 100,
-        p95_ms: :rand.uniform(1500) + 300,
-        p99_ms: :rand.uniform(3000) + 500
+        p50_ms: 0,
+        p95_ms: 0,
+        p99_ms: 0
       }
     end
   end
 
   defp get_error_rate_trend(_timeframe) do
+    # TODO: Generate actual error rate trends from telemetry data
+    # For now, return 24 hours of zero data
     for i <- 1..24 do
       %{
         timestamp: DateTime.add(DateTime.utc_now(), -i * 3600, :second),
-        error_rate_percent: :rand.uniform() * 5 + 1,
-        total_errors: :rand.uniform(20) + 2
+        error_rate_percent: 0,
+        total_errors: 0
       }
     end
   end
 
   defp get_status_distribution_trend(_timeframe) do
+    # TODO: Generate actual status distribution from telemetry data
+    # For now, return 24 hours of zero data
     for i <- 1..24 do
       %{
         timestamp: DateTime.add(DateTime.utc_now(), -i * 3600, :second),
-        pending: :rand.uniform(10) + 1,
-        queued: :rand.uniform(5) + 1,
-        processing: :rand.uniform(3) + 1,
-        sent: :rand.uniform(200) + 50,
-        failed: :rand.uniform(20) + 2
+        pending: 0,
+        queued: 0,
+        processing: 0,
+        sent: 0,
+        failed: 0
       }
     end
   end

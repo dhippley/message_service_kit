@@ -9,6 +9,7 @@ defmodule MessagingService.Application do
   def start(_type, _args) do
     children = [
       MessagingServiceWeb.Telemetry,
+      MessagingServiceWeb.TelemetryCollector,
       MessagingService.Repo,
       {DNSCluster, query: Application.get_env(:messaging_service, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: MessagingService.PubSub},
