@@ -9,7 +9,6 @@ defmodule MessagingServiceWeb.ConversationController do
   use MessagingServiceWeb, :controller
 
   alias MessagingService.Conversations
-  alias MessagingService.Messages
 
   require Logger
 
@@ -22,14 +21,28 @@ defmodule MessagingServiceWeb.ConversationController do
     Logger.info("Retrieving all conversations")
 
     try do
-      conversations = Messages.list_conversations()
+      conversations = Conversations.list_conversations_with_messages()
+
+      formatted_conversations =
+        Enum.map(conversations, fn conversation ->
+          latest_message = List.last(conversation.messages)
+
+          %{
+            id: conversation.id,
+            participant_one: conversation.participant_one,
+            participant_two: conversation.participant_two,
+            last_message_at: conversation.last_message_at,
+            message_count: conversation.message_count,
+            latest_message: format_message(latest_message)
+          }
+        end)
 
       conn
       |> put_status(:ok)
       |> json(%{
         success: true,
-        data: conversations,
-        count: length(conversations)
+        data: formatted_conversations,
+        count: length(formatted_conversations)
       })
     rescue
       error ->
@@ -53,7 +66,7 @@ defmodule MessagingServiceWeb.ConversationController do
     Logger.info("Retrieving messages for conversation #{conversation_id}")
 
     try do
-      case Conversations.get_conversation(conversation_id) do
+      case Conversations.get_conversation_with_messages(conversation_id) do
         nil ->
           conn
           |> put_status(:not_found)
@@ -63,25 +76,26 @@ defmodule MessagingServiceWeb.ConversationController do
           })
 
         conversation ->
-          case Conversations.get_conversation_with_messages(conversation_id) do
-            nil ->
-              conn
-              |> put_status(:not_found)
-              |> json(%{
-                success: false,
-                error: "Conversation not found"
-              })
+          formatted_messages =
+            Enum.map(conversation.messages, fn message ->
+              %{
+                id: message.id,
+                type: message.type,
+                body: message.body,
+                to: message.to,
+                from: message.from,
+                timestamp: message.timestamp
+              }
+            end)
 
-            conversation_with_messages ->
-              conn
-              |> put_status(:ok)
-              |> json(%{
-                success: true,
-                conversation_id: conversation.id,
-                data: conversation_with_messages.messages,
-                count: length(conversation_with_messages.messages)
-              })
-          end
+          conn
+          |> put_status(:ok)
+          |> json(%{
+            success: true,
+            conversation_id: conversation.id,
+            data: formatted_messages,
+            count: length(formatted_messages)
+          })
       end
     rescue
       error ->
@@ -94,5 +108,17 @@ defmodule MessagingServiceWeb.ConversationController do
           error: "Failed to retrieve messages"
         })
     end
+  end
+
+  # Helper function to format message data for API responses
+  defp format_message(nil), do: nil
+
+  defp format_message(message) do
+    %{
+      id: message.id,
+      type: message.type,
+      body: message.body,
+      timestamp: message.timestamp
+    }
   end
 end

@@ -24,24 +24,25 @@ The application follows a clean architecture pattern with the following layers:
 
 ```
 ├── lib/messaging_service/
-│   ├── contexts/           # Business logic and data access
-│   │   ├── conversations/  # Conversation management
-│   │   ├── messages/       # Message handling and persistence
-│   │   └── attachments/    # File attachment management
+│   ├── attachments/        # File attachment management  
+│   ├── conversations/      # Conversation management
+│   │   ├── conversation.ex # Conversation schema
+│   │   └── conversations.ex # Context functions
+│   ├── messages/           # Message handling and persistence
+│   │   ├── message.ex      # Message schema
+│   │   └── messages.ex     # Context functions  
 │   ├── providers/          # External service integrations
 │   │   ├── provider.ex     # Provider behavior definition
 │   │   ├── twilio_provider.ex
 │   │   ├── sendgrid_provider.ex
 │   │   └── provider_manager.ex
-│   └── schemas/            # Database schemas
-│       ├── conversation.ex
-│       ├── message.ex
-│       └── attachment.ex
+│   └── workers/            # Background job workers
 ├── lib/messaging_service_web/
 │   ├── controllers/        # HTTP endpoints
 │   │   ├── message_controller.ex     # Outbound message sending
 │   │   ├── conversation_controller.ex # Conversation management
 │   │   └── webhook_controller.ex     # Inbound message webhooks
+│   ├── live/              # LiveView components for web UI
 │   ├── plugs/             # Authentication and middleware
 │   └── router.ex          # Route definitions
 ```
@@ -53,8 +54,8 @@ The application follows a clean architecture pattern with the following layers:
 - `POST /api/messages/email` - Send email messages
 
 ### Conversation Management  
-- `GET /api/conversations` - List all conversations with latest messages
-- `GET /api/conversations/:id/messages` - Get all messages for a conversation
+- `GET /api/conversations` - List all conversations with participant details and latest message
+- `GET /api/conversations/:id/messages` - Get all messages for a specific conversation ID
 
 ### Inbound Webhooks (Generic Format)
 - `POST /api/webhooks/sms` - Receive inbound SMS/MMS
@@ -74,14 +75,12 @@ The application follows a clean architecture pattern with the following layers:
 - Elixir 1.14+
 - Phoenix 1.7+
 - PostgreSQL
-- Node.js (for assets)
 
 ### Installation
 
 1. **Install dependencies:**
    ```bash
    mix deps.get
-   cd assets && npm install && cd ..
    ```
 
 2. **Setup database:**
@@ -240,11 +239,13 @@ Response:
   "count": 2,
   "data": [
     {
-      "contact1": "+1234567890",
-      "contact2": "+0987654321",
-      "latest_timestamp": "2025-07-12T14:46:36.429564",
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "participant_one": "+1234567890",
+      "participant_two": "+0987654321",
+      "last_message_at": "2025-07-12T14:46:36.429564",
+      "message_count": 5,
       "latest_message": {
-        "id": "550e8400-e29b-41d4-a716-446655440000",
+        "id": "550e8400-e29b-41d4-a716-446655440001",
         "type": "sms",
         "body": "Hello from MessagingService!",
         "timestamp": "2025-07-12T14:46:36.429564"
@@ -475,11 +476,11 @@ mix ecto.gen.migration add_new_feature
 
 Adding a new messaging provider is straightforward:
 
-1. **Create provider module** implementing the `MessagingService.Providers.Provider` behavior:
+1. **Create provider module** implementing the `MessagingService.Provider` behavior:
 
 ```elixir
 defmodule MessagingService.Providers.NewProvider do
-  @behaviour MessagingService.Providers.Provider
+  @behaviour MessagingService.Provider
 
   @impl true
   def provider_name, do: "New Provider"
@@ -505,7 +506,19 @@ defmodule MessagingService.Providers.NewProvider do
 end
 ```
 
-2. **Register in configuration:**
+2. **Add to provider manager** in `lib/messaging_service/providers/provider_manager.ex`:
+
+```elixir
+@providers %{
+  twilio: TwilioProvider,
+  sendgrid: SendGridProvider,
+  new_provider: NewProvider  # Add your new provider
+}
+```
+
+3. **Register in configuration:****
+
+3. **Register in configuration:**
 
 ```elixir
 config :messaging_service, :provider_configs,
@@ -516,59 +529,19 @@ config :messaging_service, :provider_configs,
   }
 ```
 
-3. **Add to provider manager** in `lib/messaging_service/providers/provider_manager.ex`
 
-## Deployment
-
-### Production Configuration
-
-1. **Set environment variables:**
-   ```bash
-   export SECRET_KEY_BASE="your_secret_key"
-   export DATABASE_URL="postgresql://user:pass@host/db"
-   export TWILIO_ACCOUNT_SID="your_sid"
-   export TWILIO_AUTH_TOKEN="your_token"
-   export SENDGRID_API_KEY="your_key"
-   ```
-
-2. **Build release:**
-   ```bash
-   MIX_ENV=prod mix assets.deploy
-   MIX_ENV=prod mix release
-   ```
-
-3. **Run migrations:**
-   ```bash
-   _build/prod/rel/messaging_service/bin/messaging_service eval "MessagingService.Release.migrate"
-   ```
 
 ### Docker Deployment
 
-A `docker-compose.yml` is provided in the project root for easy deployment.
+A `docker-compose.yml` is provided in the project root for database setup during development. For production deployment, you would need to containerize the Phoenix application separately.
 
-## Monitoring and Logging
+```bash
+# Start the PostgreSQL database
+docker-compose up -d
 
-- Application metrics via Telemetry
-- Request logging with structured output
-- Database query monitoring
-- Provider response time tracking
-- Error reporting and alerting
+# The Phoenix app still needs to be run with mix phx.server
+```
 
-## Security
-
-- Webhook endpoint authentication
-- Input validation and sanitization
-- Rate limiting (configurable)
-- CORS protection
-- SQL injection prevention via Ecto
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Follow the coding standards (run `mix format`)
-4. Add tests for new functionality
-5. Submit a pull request
 
 ## License
 
