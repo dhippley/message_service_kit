@@ -1139,6 +1139,11 @@ select {
   margin-right: auto;
 }
 
+.mx-2 {
+  margin-left: 0.5rem;
+  margin-right: 0.5rem;
+}
+
 .mb-1 {
   margin-bottom: 0.25rem;
 }
@@ -1231,6 +1236,10 @@ select {
   margin-top: 2rem;
 }
 
+.mr-3 {
+  margin-right: 0.75rem;
+}
+
 .line-clamp-2 {
   overflow: hidden;
   display: -webkit-box;
@@ -1308,6 +1317,10 @@ select {
 
 .max-h-40 {
   max-height: 10rem;
+}
+
+.max-h-96 {
+  max-height: 24rem;
 }
 
 .min-h-\[6rem\] {
