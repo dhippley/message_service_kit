@@ -72,14 +72,14 @@ defmodule MessagingServiceWeb.ConversationComponent do
           </div>
         </div>
 
-    <!-- Recent messages preview -->
+    <!-- All messages -->
         <%= if @show_messages && has_loaded_messages?(@conversation) do %>
           <div class="mt-6 pt-4 border-t border-white/10">
             <h4 class="text-xs font-semibold text-gray-300 mb-3 flex items-center">
               <.icon name="hero-chat-bubble-oval-left" class="w-4 h-4 mr-2 text-purple-400" />
               All Messages
             </h4>
-            <div class="space-y-3 max-h-96 overflow-y-auto custom-scrollbar">
+            <div class="space-y-3 h-96 overflow-y-auto custom-scrollbar">
               <%= for message <- @conversation.messages || [] do %>
                 <.message_preview_card message={message} />
               <% end %>

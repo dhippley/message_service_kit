@@ -1315,6 +1315,10 @@ select {
   height: 100%;
 }
 
+.h-96 {
+  height: 24rem;
+}
+
 .max-h-40 {
   max-height: 10rem;
 }
