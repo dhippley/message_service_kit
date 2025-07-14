@@ -24,4 +24,6 @@ apps/messaging_service/priv/static/favicon.ico
 apps/messaging_service/priv/static/robots.txt
 apps/messaging_service/priv/gettext/errors.pot
 apps/messaging_service/priv/static/images/logo.svg
-.vscode/settings.json
+.vscode/
+.lexical/
+
