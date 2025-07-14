@@ -37,8 +37,8 @@ defmodule MessagingService.ConversationsTest do
     message
   end
 
-  describe "list_conversations/0" do
-    test "returns all conversations ordered by last_message_at desc" do
+  describe "list_conversations_with_messages/0" do
+    test "returns all conversations with messages ordered by last_message_at desc" do
       conversation1 = conversation_fixture()
 
       conversation2 =
@@ -47,7 +47,7 @@ defmodule MessagingService.ConversationsTest do
           participant_two: "diane@example.com"
         })
 
-      conversations = Conversations.list_conversations()
+      conversations = Conversations.list_conversations_with_messages()
 
       assert length(conversations) == 2
       # Should include both conversations
@@ -57,11 +57,9 @@ defmodule MessagingService.ConversationsTest do
     end
 
     test "returns empty list when no conversations exist" do
-      assert Conversations.list_conversations() == []
+      assert Conversations.list_conversations_with_messages() == []
     end
-  end
 
-  describe "list_conversations_with_messages/0" do
     test "returns conversations with preloaded messages" do
       conversation_fixture()
 

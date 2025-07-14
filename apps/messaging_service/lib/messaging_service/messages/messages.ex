@@ -15,19 +15,6 @@ defmodule MessagingService.Messages do
   require Logger
 
   @doc """
-  Returns the list of messages.
-
-  ## Examples
-
-      iex> list_messages()
-      [%Message{}, ...]
-
-  """
-  def list_messages do
-    Repo.all(Message)
-  end
-
-  @doc """
   Gets a single message.
 
   Raises `Ecto.NoResultsError` if the Message does not exist.
@@ -58,21 +45,6 @@ defmodule MessagingService.Messages do
 
   """
   def get_message(id), do: Repo.get(Message, id)
-
-  @doc """
-  Gets a message with preloaded attachments.
-
-  ## Examples
-
-      iex> get_message_with_attachments!(message_id)
-      %Message{attachments: [%MessagingService.Attachment{}, ...]}
-
-  """
-  def get_message_with_attachments!(id) do
-    Message
-    |> preload(:attachments)
-    |> Repo.get!(id)
-  end
 
   @doc """
   Creates an SMS message with conversation integration.
@@ -348,32 +320,6 @@ defmodule MessagingService.Messages do
       {:error, %Ecto.Changeset{}}
 
   """
-  def delete_message(%Message{} = message) do
-    Repo.delete(message)
-  end
-
-  @doc """
-  Returns an `%Ecto.Changeset{}` for tracking message changes.
-
-  ## Examples
-
-      iex> change_message(message)
-      %Ecto.Changeset{data: %Message{}}
-
-  """
-  def change_message(%Message{} = message, attrs \\ %{}) do
-    Message.changeset(message, attrs)
-  end
-
-  @doc """
-  Lists messages by type.
-
-  ## Examples
-
-      iex> list_messages_by_type("sms")
-      [%Message{type: "sms"}, ...]
-
-  """
   def list_messages_by_type(type) do
     Repo.all(from(m in Message, where: m.type == ^type, order_by: [desc: m.timestamp]))
   end
@@ -444,112 +390,6 @@ defmodule MessagingService.Messages do
         preload: :attachments
       )
     )
-  end
-
-  @doc """
-  Lists all unique conversations (unique contact pairs).
-
-  Returns a list of maps with contact pairs and their latest message.
-
-  ## Examples
-
-      iex> list_conversations()
-      [
-        %{contact1: "+1234567890", contact2: "+0987654321", latest_message: %Message{}},
-        ...
-      ]
-
-  """
-  def list_conversations do
-    # This is a complex query to get unique conversations
-    # We'll get all unique (from, to) pairs and their latest messages
-    conversations_query =
-      from(m in Message,
-        select: %{
-          contact1: fragment("LEAST(?, ?)", m.from, m.to),
-          contact2: fragment("GREATEST(?, ?)", m.from, m.to),
-          latest_timestamp: max(m.timestamp)
-        },
-        group_by: [
-          fragment("LEAST(?, ?)", m.from, m.to),
-          fragment("GREATEST(?, ?)", m.from, m.to)
-        ]
-      )
-
-    conversations = Repo.all(conversations_query)
-
-    # For each conversation, get the latest message
-    Enum.map(conversations, fn conv ->
-      latest_message = get_latest_conversation_message(conv.contact1, conv.contact2)
-      Map.put(conv, :latest_message, latest_message)
-    end)
-  end
-
-  @doc """
-  Searches messages by body content.
-
-  ## Examples
-
-      iex> search_messages("hello")
-      [%Message{}, ...]
-
-  """
-  def search_messages(search_term) when is_binary(search_term) do
-    search_pattern = "%#{search_term}%"
-
-    Repo.all(
-      from(m in Message, where: ilike(m.body, ^search_pattern), order_by: [desc: m.timestamp], preload: :attachments)
-    )
-  end
-
-  @doc """
-  Gets message count by type.
-
-  ## Examples
-
-      iex> get_message_count_by_type()
-      %{"sms" => 10, "mms" => 5, "email" => 3}
-
-  """
-  def get_message_count_by_type do
-    from(m in Message,
-      group_by: m.type,
-      select: {m.type, count(m.id)}
-    )
-    |> Repo.all()
-    |> Map.new()
-  end
-
-  @doc """
-  Gets messages with attachments.
-
-  ## Examples
-
-      iex> list_messages_with_attachments()
-      [%Message{attachments: [%MessagingService.Attachment{}, ...]}, ...]
-
-  """
-  def list_messages_with_attachments do
-    Repo.all(from(m in Message, join: a in assoc(m, :attachments), preload: :attachments, order_by: [desc: m.timestamp]))
-  end
-
-  @doc """
-  Validates if a message exists and is accessible.
-
-  ## Examples
-
-      iex> validate_message_exists(message_id)
-      {:ok, %Message{}}
-
-      iex> validate_message_exists("nonexistent")
-      {:error, :not_found}
-
-  """
-  def validate_message_exists(message_id) do
-    case get_message(message_id) do
-      nil -> {:error, :not_found}
-      message -> {:ok, message}
-    end
   end
 
   # Outbound messaging functions

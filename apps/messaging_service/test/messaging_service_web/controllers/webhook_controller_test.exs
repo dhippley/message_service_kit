@@ -64,7 +64,8 @@ defmodule MessagingServiceWeb.WebhookControllerTest do
       response = json_response(conn, 201)
 
       # Verify message was created with attachments
-      message = Messages.get_message_with_attachments!(response["message_id"])
+      message = Messages.get_message!(response["message_id"])
+      message = MessagingService.Repo.preload(message, :attachments)
       assert message.type == "mms"
       assert length(message.attachments) == 1
       assert hd(message.attachments).filename == "test.jpg"

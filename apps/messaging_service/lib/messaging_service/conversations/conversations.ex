@@ -13,21 +13,6 @@ defmodule MessagingService.Conversations do
   alias MessagingService.Repo
 
   @doc """
-  Returns the list of conversations.
-
-  ## Examples
-
-      iex> list_conversations()
-      [%Conversation{}, ...]
-
-  """
-  def list_conversations do
-    Conversation
-    |> order_by([c], desc: c.last_message_at)
-    |> Repo.all()
-  end
-
-  @doc """
   Returns the list of conversations with preloaded messages.
 
   ## Examples
@@ -48,22 +33,6 @@ defmodule MessagingService.Conversations do
   @doc """
   Gets a single conversation.
 
-  Raises `Ecto.NoResultsError` if the Conversation does not exist.
-
-  ## Examples
-
-      iex> get_conversation!(123)
-      %Conversation{}
-
-      iex> get_conversation!(456)
-      ** (Ecto.NoResultsError)
-
-  """
-  def get_conversation!(id), do: Repo.get!(Conversation, id)
-
-  @doc """
-  Gets a single conversation.
-
   Returns `nil` if the Conversation does not exist.
 
   ## Examples
@@ -76,6 +45,22 @@ defmodule MessagingService.Conversations do
 
   """
   def get_conversation(id), do: Repo.get(Conversation, id)
+
+  @doc """
+  Gets a single conversation.
+
+  Raises `Ecto.NoResultsError` if the Conversation does not exist.
+
+  ## Examples
+
+      iex> get_conversation!(123)
+      %Conversation{}
+
+      iex> get_conversation!(456)
+      ** (Ecto.NoResultsError)
+
+  """
+  def get_conversation!(id), do: Repo.get!(Conversation, id)
 
   @doc """
   Gets a conversation with preloaded messages.
