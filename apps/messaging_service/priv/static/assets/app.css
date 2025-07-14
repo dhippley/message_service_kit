@@ -1870,6 +1870,18 @@ select {
   --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
 }
 
+.from-yellow-500 {
+  --tw-gradient-from: #eab308 var(--tw-gradient-from-position);
+  --tw-gradient-to: rgb(234 179 8 / 0) var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+
+.from-pink-500 {
+  --tw-gradient-from: #ec4899 var(--tw-gradient-from-position);
+  --tw-gradient-to: rgb(236 72 153 / 0) var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+
 .via-purple-900 {
   --tw-gradient-to: rgb(88 28 135 / 0)  var(--tw-gradient-to-position);
   --tw-gradient-stops: var(--tw-gradient-from), #581c87 var(--tw-gradient-via-position), var(--tw-gradient-to);
@@ -1893,6 +1905,14 @@ select {
 
 .to-pink-500\/5 {
   --tw-gradient-to: rgb(236 72 153 / 0.05) var(--tw-gradient-to-position);
+}
+
+.to-orange-500 {
+  --tw-gradient-to: #f97316 var(--tw-gradient-to-position);
+}
+
+.to-purple-500 {
+  --tw-gradient-to: #a855f7 var(--tw-gradient-to-position);
 }
 
 .bg-clip-text {
@@ -2533,12 +2553,32 @@ select {
   --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
 }
 
+.hover\:from-yellow-400:hover {
+  --tw-gradient-from: #facc15 var(--tw-gradient-from-position);
+  --tw-gradient-to: rgb(250 204 21 / 0) var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+
+.hover\:from-pink-400:hover {
+  --tw-gradient-from: #f472b6 var(--tw-gradient-from-position);
+  --tw-gradient-to: rgb(244 114 182 / 0) var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+
 .hover\:to-pink-600:hover {
   --tw-gradient-to: #db2777 var(--tw-gradient-to-position);
 }
 
 .hover\:to-pink-500\/30:hover {
   --tw-gradient-to: rgb(236 72 153 / 0.3) var(--tw-gradient-to-position);
+}
+
+.hover\:to-orange-400:hover {
+  --tw-gradient-to: #fb923c var(--tw-gradient-to-position);
+}
+
+.hover\:to-purple-400:hover {
+  --tw-gradient-to: #c084fc var(--tw-gradient-to-position);
 }
 
 .hover\:text-blue-900:hover {
@@ -2579,6 +2619,16 @@ select {
 
 .hover\:shadow-purple-500\/25:hover {
   --tw-shadow-color: rgb(168 85 247 / 0.25);
+  --tw-shadow: var(--tw-shadow-colored);
+}
+
+.hover\:shadow-yellow-500\/25:hover {
+  --tw-shadow-color: rgb(234 179 8 / 0.25);
+  --tw-shadow: var(--tw-shadow-colored);
+}
+
+.hover\:shadow-pink-500\/25:hover {
+  --tw-shadow-color: rgb(236 72 153 / 0.25);
   --tw-shadow: var(--tw-shadow-colored);
 }
 
