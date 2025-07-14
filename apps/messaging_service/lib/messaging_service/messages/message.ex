@@ -45,7 +45,7 @@ defmodule MessagingService.Message do
     field :conversation_id, :binary_id
 
     # Status tracking fields
-    field :status, :string, default: "pending"
+    field :status, :string
     field :direction, :string, default: "outbound"
     field :queued_at, :naive_datetime_usec
     field :sent_at, :naive_datetime_usec
@@ -96,6 +96,7 @@ defmodule MessagingService.Message do
     |> sanitize_body_content()
     |> validate_body_content()
     |> maybe_set_timestamp()
+    |> set_default_status()
   end
 
   @doc """
@@ -233,6 +234,22 @@ defmodule MessagingService.Message do
 
       _ ->
         changeset
+    end
+  end
+
+  defp set_default_status(changeset) do
+    direction = get_field(changeset, :direction)
+    current_status = get_field(changeset, :status)
+
+    # Only set default status if no status is explicitly provided
+    if is_nil(current_status) do
+      case direction do
+        "inbound" -> put_change(changeset, :status, "received")
+        "outbound" -> put_change(changeset, :status, "pending")
+        _ -> put_change(changeset, :status, "pending")
+      end
+    else
+      changeset
     end
   end
 

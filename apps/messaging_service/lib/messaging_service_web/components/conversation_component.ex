@@ -117,14 +117,14 @@ defmodule MessagingServiceWeb.ConversationComponent do
       </div>
 
       <div class="flex-1 min-w-0">
-        <div class="flex items-center justify-between mb-1">
-          <span class={[
-            "text-xs font-semibold truncate",
+        <div class="mb-1">
+          <div class={[
+            "text-[10px] font-medium truncate flex items-center",
             direction_color(@message.direction)
           ]}>
-            {direction_label(@message.direction)}
-          </span>
-          <span class="text-xs text-gray-400 ml-2 font-medium">
+            {render_message_direction_info(@message)}
+          </div>
+          <span class="text-xs text-gray-400 font-medium">
             {format_message_time(@message.timestamp)}
           </span>
         </div>
@@ -281,17 +281,50 @@ defmodule MessagingServiceWeb.ConversationComponent do
     end
   end
 
-  defp direction_label(direction) do
-    case direction do
-      "inbound" -> "Received"
-      "outbound" -> "Sent"
-      _ -> "Unknown"
+  defp render_message_direction_info(message) do
+    case message.direction do
+      "inbound" ->
+        assigns = %{from: format_participant_name(message.from)}
+
+        ~H"""
+        <.icon name="hero-arrow-right" class="w-3 h-3 mr-1" />
+        {@from}
+        """
+
+      "outbound" ->
+        recipients = if is_list(message.to), do: message.to, else: [message.to]
+        recipient_count = length(recipients)
+
+        if recipient_count == 1 do
+          assigns = %{to: format_participant_name(List.first(recipients))}
+
+          ~H"""
+          <.icon name="hero-arrow-left" class="w-3 h-3 mr-1" />
+          {@to}
+          """
+        else
+          assigns = %{count: recipient_count}
+
+          ~H"""
+          <.icon name="hero-arrow-left" class="w-3 h-3 mr-1" />
+          {@count} recipients
+          """
+        end
+
+      _ ->
+        assigns = %{}
+
+        ~H"""
+        <.icon name="hero-question-mark-circle" class="w-3 h-3 mr-1" />
+        Unknown
+        """
     end
   end
 
   defp status_indicator_color(status) do
     case status do
       "sent" -> "bg-green-500"
+      "received" -> "bg-blue-500"
       "delivered" -> "bg-blue-500"
       "failed" -> "bg-red-500"
       "queued" -> "bg-yellow-500"
