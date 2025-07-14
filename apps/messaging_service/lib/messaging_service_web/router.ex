@@ -17,7 +17,8 @@ defmodule MessagingServiceWeb.Router do
   scope "/", MessagingServiceWeb do
     pipe_through :browser
 
-    get "/", PageController, :home
+    # Redirect root to conversations
+    get "/", Plugs.RedirectToConversations, []
 
     # LiveView routes
     live "/conversations", ConversationLive.Index, :index
