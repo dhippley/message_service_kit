@@ -21,6 +21,7 @@ defmodule MessagingServiceWeb.Router do
     get "/", Plugs.RedirectToConversations, []
 
     # LiveView routes
+    live "/dashboard", DashboardLive, :index
     live "/conversations", ConversationLive.Index, :index
     live "/conversations/:id", ConversationLive.Show, :show
   end
@@ -53,6 +54,7 @@ defmodule MessagingServiceWeb.Router do
     get "/telemetry/health", TelemetryController, :health
     get "/telemetry/messages/overview", TelemetryController, :message_delivery_overview
     get "/telemetry/messages/:type", TelemetryController, :message_type_metrics
+    get "/telemetry/stress-tests", TelemetryController, :stress_test_metrics
     get "/telemetry/trends", TelemetryController, :performance_trends
     get "/telemetry/realtime", TelemetryController, :realtime_info
   end

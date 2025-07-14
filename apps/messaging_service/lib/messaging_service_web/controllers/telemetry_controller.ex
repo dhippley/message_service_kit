@@ -211,6 +211,36 @@ defmodule MessagingServiceWeb.TelemetryController do
     json(conn, docs)
   end
 
+  @doc """
+  Get stress test metrics from MockProvider.
+  """
+  def stress_test_metrics(conn, _params) do
+    # Get stress test data from MockProvider.Telemetry
+    try do
+      summary = MockProvider.Telemetry.get_metrics_summary()
+      recent_tests = MockProvider.Telemetry.get_stress_test_metrics() |> Enum.take(10)
+
+      metrics = %{
+        summary: summary,
+        recent_tests: recent_tests,
+        timestamp: DateTime.utc_now()
+      }
+
+      json(conn, metrics)
+    rescue
+      error ->
+        Logger.error("Failed to fetch stress test metrics: #{inspect(error)}")
+
+        conn
+        |> put_status(:service_unavailable)
+        |> json(%{
+          error: "Stress test metrics unavailable",
+          details: Exception.message(error),
+          timestamp: DateTime.utc_now()
+        })
+    end
+  end
+
   # Private helper functions
   # In a real implementation, these would query your metrics storage system
 
