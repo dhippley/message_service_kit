@@ -39,75 +39,79 @@ defmodule MessagingServiceWeb.ConversationComponent do
   def render(assigns) do
     ~H"""
     <div class={[
-      "bg-white overflow-hidden shadow rounded-lg border border-gray-200 transition-all duration-200",
-      @clickable && "hover:shadow-md hover:border-gray-300 cursor-pointer",
+      "backdrop-blur-sm bg-white/10 border border-white/20 rounded-2xl shadow-xl transition-all duration-300 group overflow-hidden relative",
+      @clickable && "hover:bg-white/15 hover:border-white/30 hover:shadow-2xl hover:scale-[1.02] cursor-pointer transform",
       @class
     ]}>
-      <div class="p-5">
+      <!-- Gradient overlay for extra visual interest -->
+      <div class="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+
+      <div class="relative p-6">
         <!-- Header with participants -->
-        <div class="flex items-start justify-between">
+        <div class="flex items-start justify-between mb-4">
           <div class="flex-1 min-w-0">
-            <h3 class="text-base font-medium text-gray-900">
-              <div class="flex flex-col space-y-1">
-                <span class="text-blue-600 truncate">
+            <h3 class="text-lg font-semibold text-white">
+              <div class="flex flex-col space-y-2">
+                <span class="text-purple-300 truncate flex items-center">
+                  <div class="w-2 h-2 bg-purple-400 rounded-full mr-2 animate-pulse"></div>
                   {format_participant(@conversation.participant_one)}
                 </span>
                 <div class="flex items-center text-gray-400">
-                  <.icon name="hero-arrow-down" class="w-3 h-3 mr-1" />
-                  <span class="text-green-600 truncate">
+                  <.icon name="hero-arrow-right" class="w-4 h-4 mr-2 text-gray-500" />
+                  <span class="text-pink-300 truncate">
                     {format_participant(@conversation.participant_two)}
                   </span>
                 </div>
               </div>
             </h3>
             <%= if @show_messages do %>
-              <p class="mt-2 text-sm text-gray-500 line-clamp-2">
+              <p class="mt-3 text-sm text-gray-300 line-clamp-2 leading-relaxed">
                 {message_preview(@conversation.messages)}
               </p>
             <% end %>
           </div>
-          
-    <!-- Status badge -->
+
+          <!-- Status badge -->
           <div class={[
-            "ml-3 flex-shrink-0 px-2 py-1 text-xs font-medium rounded-full",
+            "ml-4 flex-shrink-0 px-3 py-1.5 text-xs font-semibold rounded-full border",
             conversation_status_class(@conversation.messages)
           ]}>
             {conversation_status_text(@conversation)}
           </div>
         </div>
-        
-    <!-- Conversation metadata -->
-        <div class="mt-4 flex flex-col space-y-2 text-sm text-gray-500">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center">
-              <.icon name="hero-clock" class="w-4 h-4 mr-1" />
-              <span class="truncate">{format_timestamp(@conversation.last_message_at)}</span>
-            </div>
 
-            <div class="flex items-center">
-              <.icon name="hero-chat-bubble-left-right" class="w-4 h-4 mr-1" />
-              {@conversation.message_count}
-            </div>
+        <!-- Conversation metadata -->
+        <div class="flex items-center justify-between text-sm text-gray-400 mb-4">
+          <div class="flex items-center">
+            <.icon name="hero-clock" class="w-4 h-4 mr-2 text-purple-400" />
+            <span>{format_timestamp(@conversation.last_message_at)}</span>
           </div>
 
-          <%= if @clickable do %>
-            <.link
-              navigate={~p"/conversations/#{@conversation.id}"}
-              class="text-blue-600 hover:text-blue-900 font-medium transition-colors text-center py-1"
-            >
-              View Details →
-            </.link>
-          <% end %>
+          <div class="flex items-center">
+            <.icon name="hero-chat-bubble-left-right" class="w-4 h-4 mr-2 text-pink-400" />
+            <span class="font-medium">{@conversation.message_count} messages</span>
+          </div>
         </div>
-        
-    <!-- Recent messages preview -->
+
+        <%= if @clickable do %>
+          <.link
+            navigate={~p"/conversations/#{@conversation.id}"}
+            class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/30 rounded-lg hover:from-purple-500/30 hover:to-pink-500/30 hover:border-purple-400/50 transition-all duration-200 w-full justify-center group-hover:scale-105"
+          >
+            View Conversation
+            <.icon name="hero-arrow-right" class="w-4 h-4 ml-2" />
+          </.link>
+        <% end %>
+
+        <!-- Recent messages preview -->
         <%= if @show_messages && has_loaded_messages?(@conversation) do %>
-          <div class="mt-4 border-t pt-3">
-            <h4 class="text-xs font-medium text-gray-700 mb-2 flex items-center">
-              <.icon name="hero-chat-bubble-oval-left" class="w-3 h-3 mr-1" /> Recent
+          <div class="mt-6 pt-4 border-t border-white/10">
+            <h4 class="text-xs font-semibold text-gray-300 mb-3 flex items-center">
+              <.icon name="hero-chat-bubble-oval-left" class="w-4 h-4 mr-2 text-purple-400" />
+              Recent Messages
             </h4>
-            <div class="space-y-2 max-h-32 overflow-y-auto">
-              <%= for message <- Enum.take(@conversation.messages || [], -2) do %>
+            <div class="space-y-3 max-h-40 overflow-y-auto custom-scrollbar">
+              <%= for message <- Enum.take(@conversation.messages || [], -3) do %>
                 <.message_preview_card message={message} />
               <% end %>
             </div>
@@ -123,38 +127,38 @@ defmodule MessagingServiceWeb.ConversationComponent do
 
   defp message_preview_card(assigns) do
     ~H"""
-    <div class="flex items-start space-x-2 p-2 bg-gray-50 rounded-md">
+    <div class="flex items-start space-x-3 p-3 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-all duration-200">
       <div class={[
-        "px-1.5 py-0.5 rounded text-xs font-medium shrink-0",
+        "px-2 py-1 rounded-lg text-xs font-semibold shrink-0 border",
         message_type_class(@message)
       ]}>
         {String.upcase(@message.type)}
       </div>
 
       <div class="flex-1 min-w-0">
-        <div class="flex items-center justify-between">
+        <div class="flex items-center justify-between mb-1">
           <span class={[
-            "text-xs font-medium truncate",
+            "text-xs font-semibold truncate",
             direction_color(@message.direction)
           ]}>
             {direction_label(@message.direction)}
           </span>
-          <span class="text-xs text-gray-500 ml-2">
+          <span class="text-xs text-gray-400 ml-2 font-medium">
             {format_message_time(@message.timestamp)}
           </span>
         </div>
-        <p class="text-xs text-gray-900 mt-0.5 line-clamp-2">
+        <p class="text-sm text-gray-200 line-clamp-2 leading-relaxed">
           {clean_message_body(@message.body, @message.type)}
         </p>
 
         <%= if @message.status do %>
-          <div class="mt-1 flex items-center">
+          <div class="mt-2 flex items-center">
             <div class={[
-              "w-1.5 h-1.5 rounded-full mr-1",
+              "w-2 h-2 rounded-full mr-2",
               status_indicator_color(@message.status)
             ]}>
             </div>
-            <span class="text-xs text-gray-500 capitalize">
+            <span class="text-xs text-gray-400 capitalize font-medium">
               {@message.status}
             </span>
           </div>
@@ -228,18 +232,18 @@ defmodule MessagingServiceWeb.ConversationComponent do
     last_message = List.last(messages)
 
     case last_message.direction do
-      "inbound" -> "bg-blue-100 text-blue-800"
-      "outbound" -> "bg-green-100 text-green-800"
-      _ -> "bg-gray-100 text-gray-800"
+      "inbound" -> "bg-blue-500/20 text-blue-300 border-blue-500/30"
+      "outbound" -> "bg-green-500/20 text-green-300 border-green-500/30"
+      _ -> "bg-gray-500/20 text-gray-300 border-gray-500/30"
     end
   end
 
-  defp conversation_status_class(%NotLoaded{}), do: "bg-gray-100 text-gray-800"
-  defp conversation_status_class(_), do: "bg-gray-100 text-gray-800"
+  defp conversation_status_class(%NotLoaded{}), do: "bg-purple-500/20 text-purple-300 border-purple-500/30"
+  defp conversation_status_class(_), do: "bg-gray-500/20 text-gray-300 border-gray-500/30"
 
   defp conversation_status_text(conversation) do
     case conversation.message_count do
-      0 -> "New"
+      0 -> "New Chat"
       count when count < 5 -> "Active"
       _ -> "#{conversation.message_count} msgs"
     end
@@ -247,18 +251,18 @@ defmodule MessagingServiceWeb.ConversationComponent do
 
   defp message_type_class(message) do
     case message.type do
-      "sms" -> "bg-blue-100 text-blue-800"
-      "mms" -> "bg-purple-100 text-purple-800"
-      "email" -> "bg-green-100 text-green-800"
-      _ -> "bg-gray-100 text-gray-800"
+      "sms" -> "bg-blue-500/20 text-blue-300 border-blue-500/40"
+      "mms" -> "bg-purple-500/20 text-purple-300 border-purple-500/40"
+      "email" -> "bg-green-500/20 text-green-300 border-green-500/40"
+      _ -> "bg-gray-500/20 text-gray-300 border-gray-500/40"
     end
   end
 
   defp direction_color(direction) do
     case direction do
-      "inbound" -> "text-blue-600"
-      "outbound" -> "text-green-600"
-      _ -> "text-gray-600"
+      "inbound" -> "text-blue-300"
+      "outbound" -> "text-green-300"
+      _ -> "text-gray-300"
     end
   end
 
