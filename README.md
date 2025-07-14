@@ -2,6 +2,10 @@
 
 A comprehensive Elixir umbrella project for messaging services, providing a unified API for sending SMS, MMS, and email messages through multiple providers.
 
+
+<img width="1812" height="916" alt="Screenshot 2025-07-14 at 11 58 02" src="https://github.com/user-attachments/assets/1cf063ad-ac5b-44bf-88e4-e48de7ed660a" />
+
+
 ## Apps
 
 - **messaging_service**: Phoenix-based main application providing messaging API
@@ -46,11 +50,13 @@ make clean
 
 **Note**: The Makefile uses Docker Compose to manage the PostgreSQL database. Make sure Docker is installed and running on your system.
 
+
 ## Web Interface
 
 Once the application is running, you can access the web interface at `http://localhost:4000`. The interface provides real-time monitoring and management capabilities for your messaging service.
 
 ### Dashboard
+<img width="1587" height="722" alt="Screenshot 2025-07-14 at 11 56 12" src="https://github.com/user-attachments/assets/160155e0-f326-43e9-8396-88ba42f1a627" />
 
 The real-time telemetry dashboard (`/dashboard`) offers comprehensive monitoring of your messaging service:
 
@@ -75,6 +81,7 @@ The real-time telemetry dashboard (`/dashboard`) offers comprehensive monitoring
 - **Historical Data**: Trends and patterns from previous test runs
 
 ### Conversations
+<img width="1788" height="916" alt="Screenshot 2025-07-14 at 11 55 39" src="https://github.com/user-attachments/assets/2348cafc-64ec-43b2-ad1e-e3e8b049f1df" />
 
 The conversation management interface (`/conversations`) provides:
 
@@ -101,6 +108,9 @@ Both interfaces feature:
 ### Party Mode (Stress Testing)
 
 The application includes built-in stress testing capabilities accessible through both the web interface and command line:
+
+
+<img width="115" height="68" alt="Screenshot 2025-07-14 at 11 59 08" src="https://github.com/user-attachments/assets/ccbffb74-dc7a-4323-8245-405f38704034" />
 
 **Web Interface Testing**
 - **Party Button**: Located in the top navigation, click the 🎉 button for instant stress testing
