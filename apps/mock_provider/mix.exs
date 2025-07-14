@@ -37,6 +37,7 @@ defmodule MockProvider.MixProject do
     [
       {:plug_cowboy, "~> 2.0"},
       {:jason, "~> 1.0"},
+      {:req, "~> 0.5.0"},
       {:styler, "~> 1.4", only: [:dev, :test], runtime: false},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:excoveralls, "~> 0.18", only: :test}

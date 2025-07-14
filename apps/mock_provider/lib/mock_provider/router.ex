@@ -37,6 +37,23 @@ defmodule MockProvider.Router do
     MockProvider.SendGridMock.get_message_activity(conn)
   end
 
+  # SMS conversation simulation endpoint
+  post "/simulate/sms-conversation" do
+    MockProvider.ConversationSimulator.simulate_conversation(conn)
+  end
+
+  # List available conversation scenarios
+  get "/simulate/scenarios" do
+    scenarios = MockProvider.ConversationSimulator.list_scenarios()
+
+    conn
+    |> put_resp_content_type("application/json")
+    |> send_resp(200, Jason.encode!(%{
+      status: "success",
+      scenarios: scenarios
+    }))
+  end
+
   # Health check
   get "/health" do
     conn
