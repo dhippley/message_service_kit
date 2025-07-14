@@ -42,6 +42,11 @@ defmodule MockProvider.Router do
     MockProvider.ConversationSimulator.simulate_conversation(conn)
   end
 
+  # SMS stress test endpoint
+  post "/simulate/stress-test" do
+    MockProvider.ConversationSimulator.stress_test(conn)
+  end
+
   # List available conversation scenarios
   get "/simulate/scenarios" do
     scenarios = MockProvider.ConversationSimulator.list_scenarios()

@@ -237,4 +237,137 @@ defmodule MockProvider.ConversationSimulator do
   defp get_scenario_description("lotr_black_gate"), do: "Epic dialogue between Aragorn and the Mouth of Sauron at the Black Gate of Mordor"
   defp get_scenario_description("ghostbusters_elevator"), do: "Classic Ghostbusters elevator scene about untested proton pack equipment"
   defp get_scenario_description(_), do: "Custom conversation scenario"
+
+  @doc """
+  Starts a stress test by sending a large number of random scenarios asynchronously.
+  """
+  def stress_test(conn) do
+    with {:ok, params} <- parse_stress_test_params(conn) do
+      # Start stress test asynchronously
+      test_id = generate_test_id()
+
+      Task.start(fn ->
+        Logger.info("Starting stress test: #{test_id} with #{params.scenario_count} scenarios")
+        execute_stress_test(test_id, params)
+      end)
+
+      conn
+      |> Plug.Conn.put_resp_content_type("application/json")
+      |> Plug.Conn.send_resp(200, Jason.encode!(%{
+        status: "success",
+        message: "Stress test started",
+        test_id: test_id,
+        scenario_count: params.scenario_count,
+        concurrent_workers: params.concurrent_workers,
+        delay_between_batches: params.delay_between_batches
+      }))
+    else
+      {:error, reason} ->
+        Logger.error("Stress test failed to start: #{inspect(reason)}")
+        conn
+        |> Plug.Conn.put_resp_content_type("application/json")
+        |> Plug.Conn.send_resp(400, Jason.encode!(%{
+          status: "error",
+          message: reason
+        }))
+    end
+  end
+
+  defp parse_stress_test_params(conn) do
+    params = conn.body_params || %{}
+
+    scenario_count = Map.get(params, "scenario_count", 1000)
+    concurrent_workers = Map.get(params, "concurrent_workers", 10)
+    delay_between_batches = Map.get(params, "delay_between_batches", 100)
+    scenario_types = Map.get(params, "scenario_types", ["chaos", "lotr_black_gate", "ghostbusters_elevator"])
+
+    # Validate parameters
+    cond do
+      not is_integer(scenario_count) or scenario_count < 1 or scenario_count > 10000 ->
+        {:error, "scenario_count must be between 1 and 10000"}
+
+      not is_integer(concurrent_workers) or concurrent_workers < 1 or concurrent_workers > 50 ->
+        {:error, "concurrent_workers must be between 1 and 50"}
+
+      not is_integer(delay_between_batches) or delay_between_batches < 0 ->
+        {:error, "delay_between_batches must be >= 0"}
+
+      not is_list(scenario_types) or Enum.empty?(scenario_types) ->
+        {:error, "scenario_types must be a non-empty list"}
+
+      true ->
+        {:ok, %{
+          scenario_count: scenario_count,
+          concurrent_workers: concurrent_workers,
+          delay_between_batches: delay_between_batches,
+          scenario_types: scenario_types
+        }}
+    end
+  end
+
+  defp generate_test_id do
+    :crypto.strong_rand_bytes(8) |> Base.encode16(case: :lower)
+  end
+
+  defp execute_stress_test(test_id, params) do
+    start_time = System.monotonic_time(:millisecond)
+
+    # Create batches of scenarios
+    batch_size = div(params.scenario_count, params.concurrent_workers)
+    remaining = rem(params.scenario_count, params.concurrent_workers)
+
+    # Create tasks for concurrent execution
+    tasks = Enum.map(1..params.concurrent_workers, fn worker_id ->
+      scenarios_for_worker = if worker_id == params.concurrent_workers do
+        batch_size + remaining
+      else
+        batch_size
+      end
+
+      Task.async(fn ->
+        execute_worker_batch(test_id, worker_id, scenarios_for_worker, params)
+      end)
+    end)
+
+    # Wait for all workers to complete and collect results
+    results = Task.await_many(tasks, :infinity)
+
+    end_time = System.monotonic_time(:millisecond)
+    duration = end_time - start_time
+
+    # Calculate statistics
+    total_messages = Enum.sum(results)
+    successful_scenarios = length(results)
+
+    Logger.info("Stress test #{test_id} completed:")
+    Logger.info("  Duration: #{duration}ms")
+    Logger.info("  Scenarios executed: #{successful_scenarios}")
+    Logger.info("  Total messages sent: #{total_messages}")
+    Logger.info("  Messages per second: #{Float.round(total_messages / (duration / 1000), 2)}")
+  end
+
+  defp execute_worker_batch(test_id, worker_id, scenario_count, params) do
+    Logger.info("Worker #{worker_id} starting #{scenario_count} scenarios for test #{test_id}")
+
+    total_messages = Enum.reduce(1..scenario_count, 0, fn scenario_num, acc ->
+      # Generate random scenario
+      scenario_type = Enum.random(params.scenario_types)
+      {:ok, scenario} = get_scenario(%{scenario: scenario_type})
+
+      # Execute scenario
+      Enum.each(scenario.messages, fn message ->
+        send_message(message)
+      end)
+
+      # Add delay between batches if specified
+      if params.delay_between_batches > 0 and rem(scenario_num, 10) == 0 do
+        Process.sleep(params.delay_between_batches)
+      end
+
+      acc + length(scenario.messages)
+    end)
+
+    Logger.info("Worker #{worker_id} completed #{scenario_count} scenarios, sent #{total_messages} messages")
+    total_messages
+  end
 end
