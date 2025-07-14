@@ -229,7 +229,7 @@ defmodule MessagingService.Providers.ProviderManager do
               auth_token: System.get_env("TWILIO_AUTH_TOKEN", "test_token_123456789012345678901234"),
               from_number: System.get_env("TWILIO_FROM_NUMBER", "+15551234567")
             },
-            enabled: false
+            enabled: true
           },
           sendgrid: %{
             provider: :sendgrid,
@@ -238,11 +238,6 @@ defmodule MessagingService.Providers.ProviderManager do
               from_email: System.get_env("SENDGRID_FROM_EMAIL", "test@example.com"),
               from_name: System.get_env("SENDGRID_FROM_NAME", "Test Service")
             },
-            enabled: false
-          },
-          mock: %{
-            provider: :mock,
-            config: %{provider_name: :generic},
             enabled: true
           }
         }

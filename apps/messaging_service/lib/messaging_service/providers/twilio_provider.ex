@@ -135,6 +135,31 @@ defmodule MessagingService.Providers.TwilioProvider do
   end
 
   defp send_twilio_message(message, config) do
+    # Twilio doesn't support multiple recipients in a single call
+    # We need to send individual messages for each recipient
+    recipients = if is_list(message.to), do: message.to, else: [message.to]
+
+    results = Enum.map(recipients, fn recipient ->
+      single_message = %{message | to: recipient}
+      send_single_twilio_message(single_message, config)
+    end)
+
+    # Check if all messages succeeded
+    case Enum.split_with(results, fn {status, _} -> status == :ok end) do
+      {successful, []} ->
+        # All succeeded - return the first message ID
+        {_, first_message_id} = hd(successful)
+        Logger.info("Twilio messages sent successfully to #{length(recipients)} recipients")
+        {:ok, first_message_id}
+
+      {_successful, failed} ->
+        # Some failed - return the first error
+        {_, error} = hd(failed)
+        {:error, error}
+    end
+  end
+
+  defp send_single_twilio_message(message, config) do
     url = build_twilio_url(config[:account_sid])
     headers = build_headers(config)
     body = build_request_body(message)

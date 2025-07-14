@@ -153,17 +153,33 @@ defmodule MessagingService.Workers.MessageDeliveryWorker do
 
   defp deliver_message(message, provider_configs) do
     message_request = build_message_request(message)
+    Logger.info("Starting message delivery for #{message.id} with configs: #{inspect(Map.keys(provider_configs))}")
 
-    case ProviderManager.send_message(message_request, provider_configs) do
-      {:ok, provider_message_id, provider_name} ->
-        update_message_success(message, provider_message_id, provider_name)
-        Logger.info("Message delivered successfully: #{message.id}")
-        :ok
+    try do
+      case ProviderManager.send_message(message_request, provider_configs) do
+        {:ok, provider_message_id, provider_name} ->
+          Logger.info("Provider returned success: #{provider_message_id}, #{provider_name}")
+          update_message_success(message, provider_message_id, provider_name)
+          Logger.info("Message delivered successfully: #{message.id}")
+          :ok
 
-      {:error, reason} ->
-        update_message_failure(message, reason)
-        Logger.error("Failed to deliver message #{message.id}: #{reason}")
-        {:error, reason}
+        {:error, reason} ->
+          Logger.error("Provider returned error: #{inspect(reason)}")
+          update_message_failure(message, reason)
+          Logger.error("Failed to deliver message #{message.id}: #{reason}")
+          {:error, reason}
+
+        other ->
+          Logger.error("Provider returned unexpected result: #{inspect(other)}")
+          update_message_failure(message, "Unexpected provider response: #{inspect(other)}")
+          {:error, "Unexpected provider response"}
+      end
+    rescue
+      e ->
+        Logger.error("Exception in message delivery: #{inspect(e)}")
+        Logger.error("Stacktrace: #{Exception.format_stacktrace(__STACKTRACE__)}")
+        update_message_failure(message, "Exception: #{inspect(e)}")
+        {:error, "Exception: #{inspect(e)}"}
     end
   end
 
