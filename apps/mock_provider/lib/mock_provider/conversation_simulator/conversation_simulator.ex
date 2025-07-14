@@ -197,46 +197,28 @@ defmodule MockProvider.ConversationSimulator do
   defp send_webhook_to_messaging_service(message) do
     url = "#{@messaging_service_base_url}/webhooks/sms"
 
-    # Handle both single recipient and multiple recipients
-    recipients = if is_list(message.to), do: message.to, else: [message.to]
+    # Webhook payload format (using lowercase keys expected by the controller)
+    payload = %{
+      from: message.from,
+      to: message.to,  # Send the 'to' field as-is (can be string or list)
+      body: message.body,
+      provider_id: "SM#{:rand.uniform(100_000_000_000_000_000_000_000_000_000_000)}",
+      type: "sms"
+    }
 
-    # Send individual webhook calls for each recipient since webhooks use form encoding
-    # which doesn't support lists properly
-    results = Enum.map(recipients, fn recipient ->
-      # Webhook payload format (using lowercase keys expected by the controller)
-      payload = %{
-        from: message.from,
-        to: recipient,  # Send to individual recipient
-        body: message.body,
-        provider_id: "SM#{:rand.uniform(100_000_000_000_000_000_000_000_000_000_000)}",
-        type: "sms"
-      }
+    headers = [
+      {"authorization", "ApiKey dev-api-key-123"}
+    ]
 
-      headers = [
-        {"authorization", "ApiKey dev-api-key-123"}
-      ]
+    case Req.post(url, json: payload, headers: headers) do
+      {:ok, %{status: 200, body: body}} ->
+        {:ok, body}
 
-      case Req.post(url, form: payload, headers: headers) do
-        {:ok, %{status: 200, body: body}} ->
-          {:ok, body}
+      {:ok, %{status: status_code, body: body}} ->
+        {:error, "HTTP #{status_code}: #{inspect(body)}"}
 
-        {:ok, %{status: status_code, body: body}} ->
-          {:error, "HTTP #{status_code}: #{inspect(body)}"}
-
-        {:error, reason} ->
-          {:error, "Network error: #{inspect(reason)}"}
-      end
-    end)
-
-    # Return success if all webhook calls succeeded
-    failed_results = Enum.filter(results, fn
-      {:ok, _} -> false
-      {:error, _} -> true
-    end)
-
-    case failed_results do
-      [] -> {:ok, "All webhooks sent successfully"}
-      errors -> {:error, "Some webhook failures: #{inspect(errors)}"}
+      {:error, reason} ->
+        {:error, "Network error: #{inspect(reason)}"}
     end
   rescue
     exception ->

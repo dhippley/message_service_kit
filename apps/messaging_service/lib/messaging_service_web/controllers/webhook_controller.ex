@@ -199,7 +199,8 @@ defmodule MessagingServiceWeb.WebhookController do
       from: get_param(params, "from"),
       to: get_param(params, "to"),
       body: get_param(params, "body"),
-      messaging_provider_id: get_param(params, "provider_id")
+      messaging_provider_id: get_param(params, "provider_id"),
+      direction: "inbound"  # Webhook messages are always inbound
     }
 
     # Add email-specific fields

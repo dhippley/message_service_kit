@@ -7,7 +7,7 @@
     <p class="text-xl text-gray-300 mb-6">
       Manage and view all active conversations
       <%= if @pagination.total_count > 0 do %>
-        <span class="text-gray-400">(<%= @pagination.total_count %> total)</span>
+        <span class="text-gray-400">({@pagination.total_count} total)</span>
       <% end %>
     </p>
 
@@ -56,7 +56,7 @@
         <% end %>
       </div>
       
-      <!-- Pagination Controls -->
+<!-- Pagination Controls -->
       <%= if @pagination.total_pages > 1 do %>
         <div class="mt-12 flex justify-center">
           <nav class="flex items-center space-x-2" aria-label="Pagination">
@@ -67,21 +67,19 @@
                 phx-value-page={@pagination.page - 1}
                 class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-300 bg-gray-800/50 hover:bg-gray-700/50 rounded-lg border border-gray-700 hover:border-gray-600 transition-all duration-200"
               >
-                <.icon name="hero-chevron-left" class="w-5 h-5 mr-1" />
-                Previous
+                <.icon name="hero-chevron-left" class="w-5 h-5 mr-1" /> Previous
               </button>
             <% else %>
               <span class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-500 bg-gray-800/20 rounded-lg border border-gray-800 cursor-not-allowed">
-                <.icon name="hero-chevron-left" class="w-5 h-5 mr-1" />
-                Previous
+                <.icon name="hero-chevron-left" class="w-5 h-5 mr-1" /> Previous
               </span>
             <% end %>
-
-            <!-- Page Numbers -->
+            
+<!-- Page Numbers -->
             <%= for page_num <- pagination_range(@pagination) do %>
               <%= if page_num == @pagination.page do %>
                 <span class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg border border-purple-500 shadow-lg shadow-purple-500/25">
-                  <%= page_num %>
+                  {page_num}
                 </span>
               <% else %>
                 <button
@@ -89,35 +87,34 @@
                   phx-value-page={page_num}
                   class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-300 bg-gray-800/50 hover:bg-gray-700/50 rounded-lg border border-gray-700 hover:border-gray-600 transition-all duration-200"
                 >
-                  <%= page_num %>
+                  {page_num}
                 </button>
               <% end %>
             <% end %>
-
-            <!-- Next Page -->
+            
+<!-- Next Page -->
             <%= if @pagination.has_next do %>
               <button
                 phx-click="goto_page"
                 phx-value-page={@pagination.page + 1}
                 class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-300 bg-gray-800/50 hover:bg-gray-700/50 rounded-lg border border-gray-700 hover:border-gray-600 transition-all duration-200"
               >
-                Next
-                <.icon name="hero-chevron-right" class="w-5 h-5 ml-1" />
+                Next <.icon name="hero-chevron-right" class="w-5 h-5 ml-1" />
               </button>
             <% else %>
               <span class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-500 bg-gray-800/20 rounded-lg border border-gray-800 cursor-not-allowed">
-                Next
-                <.icon name="hero-chevron-right" class="w-5 h-5 ml-1" />
+                Next <.icon name="hero-chevron-right" class="w-5 h-5 ml-1" />
               </span>
             <% end %>
           </nav>
         </div>
-
-        <!-- Pagination Info -->
+        
+<!-- Pagination Info -->
         <div class="mt-4 text-center text-sm text-gray-400">
-          Showing <%= (@pagination.page - 1) * @pagination.per_page + 1 %> to 
-          <%= min(@pagination.page * @pagination.per_page, @pagination.total_count) %> of 
-          <%= @pagination.total_count %> conversations
+          Showing {(@pagination.page - 1) * @pagination.per_page + 1} to {min(
+            @pagination.page * @pagination.per_page,
+            @pagination.total_count
+          )} of {@pagination.total_count} conversations
         </div>
       <% end %>
     <% end %>

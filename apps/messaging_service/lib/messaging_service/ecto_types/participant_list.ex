@@ -27,6 +27,7 @@ defmodule MessagingService.EctoTypes.ParticipantList do
       :error
     end
   end
+
   def cast(_), do: :error
 
   @doc """
@@ -38,6 +39,7 @@ defmodule MessagingService.EctoTypes.ParticipantList do
       {:error, _} -> :error
     end
   end
+
   def load(_), do: :error
 
   @doc """
@@ -49,6 +51,7 @@ defmodule MessagingService.EctoTypes.ParticipantList do
       {:error, _} -> :error
     end
   end
+
   def dump(_), do: :error
 
   @doc """

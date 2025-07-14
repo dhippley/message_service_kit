@@ -9,6 +9,7 @@ defmodule MessagingServiceWeb.ConversationComponent do
   use MessagingServiceWeb, :live_component
 
   alias Ecto.Association.NotLoaded
+  alias MessagingService.Conversation
 
   @doc """
   Renders a conversation card component.
@@ -53,35 +54,11 @@ defmodule MessagingServiceWeb.ConversationComponent do
         <div class="flex items-start justify-between mb-4">
           <div class="flex-1 min-w-0">
             <h3 class="text-lg font-semibold text-white">
-              <div class="flex flex-col space-y-2">
-                <span class="text-purple-300 truncate flex items-center">
-                  <div class="w-2 h-2 bg-purple-400 rounded-full mr-2 animate-pulse"></div>
-                  {format_participant(@conversation.participant_one)}
-                </span>
-                <div class="flex items-center text-gray-400">
-                  <.icon name="hero-arrow-right" class="w-4 h-4 mr-2 text-gray-500" />
-                  <span class="text-pink-300 truncate">
-                    {format_participant(@conversation.participant_two)}
-                  </span>
-                </div>
-              </div>
+              {render_participants(@conversation)}
             </h3>
-            <%= if @show_messages do %>
-              <p class="mt-3 text-sm text-gray-300 line-clamp-2 leading-relaxed">
-                {message_preview(@conversation.messages)}
-              </p>
-            <% end %>
-          </div>
-          
-    <!-- Status badge -->
-          <div class={[
-            "ml-4 flex-shrink-0 px-3 py-1.5 text-xs font-semibold rounded-full border",
-            conversation_status_class(@conversation.messages)
-          ]}>
-            {conversation_status_text(@conversation)}
           </div>
         </div>
-        
+
     <!-- Conversation metadata -->
         <div class="flex items-center justify-between text-sm text-gray-400 mb-4">
           <div class="flex items-center">
@@ -95,15 +72,6 @@ defmodule MessagingServiceWeb.ConversationComponent do
           </div>
         </div>
 
-        <%= if @clickable do %>
-          <.link
-            navigate={~p"/conversations/#{@conversation.id}"}
-            class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/30 rounded-lg hover:from-purple-500/30 hover:to-pink-500/30 hover:border-purple-400/50 transition-all duration-200 w-full justify-center group-hover:scale-105"
-          >
-            View Conversation <.icon name="hero-arrow-right" class="w-4 h-4 ml-2" />
-          </.link>
-        <% end %>
-        
     <!-- Recent messages preview -->
         <%= if @show_messages && has_loaded_messages?(@conversation) do %>
           <div class="mt-6 pt-4 border-t border-white/10">
@@ -116,6 +84,18 @@ defmodule MessagingServiceWeb.ConversationComponent do
                 <.message_preview_card message={message} />
               <% end %>
             </div>
+          </div>
+        <% end %>
+
+        <!-- View Conversation Button -->
+        <%= if @clickable do %>
+          <div class="mt-6">
+            <.link
+              navigate={~p"/conversations/#{@conversation.id}"}
+              class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/30 rounded-lg hover:from-purple-500/30 hover:to-pink-500/30 hover:border-purple-400/50 transition-all duration-200 w-full justify-center group-hover:scale-105"
+            >
+              View Conversation <.icon name="hero-arrow-right" class="w-4 h-4 ml-2" />
+            </.link>
           </div>
         <% end %>
       </div>
@@ -171,7 +151,80 @@ defmodule MessagingServiceWeb.ConversationComponent do
 
   # Helper functions
 
-  defp format_participant(participant) do
+  # Renders participants based on conversation type (direct or group)
+  defp render_participants(conversation) do
+    participants = Conversation.get_participants(conversation)
+
+    case {conversation.conversation_type, length(participants)} do
+      {"group", count} when count > 2 ->
+        render_group_participants(participants, count)
+
+      {_, 2} ->
+        render_direct_participants(participants)
+
+      _ ->
+        assigns = %{participants: participants}
+
+        ~H"""
+        <div class="flex flex-col space-y-2">
+          <span class="text-purple-300 truncate flex items-center">
+            <div class="w-2 h-2 bg-purple-400 rounded-full mr-2 animate-pulse"></div>
+            Unknown conversation
+          </span>
+        </div>
+        """
+    end
+  end
+
+  # Renders direct conversation participants (2 people)
+  defp render_direct_participants([p1, p2]) do
+    assigns = %{p1: format_participant_name(p1), p2: format_participant_name(p2)}
+
+    ~H"""
+    <div class="flex flex-col space-y-2">
+      <span class="text-purple-300 truncate flex items-center">
+        <.icon name="hero-users" class="w-4 h-4 mr-2 text-purple-400" />
+        {@p1}
+      </span>
+      <div class="flex items-center text-gray-400">
+        <.icon name="hero-users" class="w-4 h-4 mr-2 text-gray-500" />
+        <span class="text-pink-300 truncate">
+          {@p2}
+        </span>
+      </div>
+    </div>
+    """
+  end
+
+  # Renders group conversation participants (3+ people)
+  defp render_group_participants(participants, count) do
+    [first, second | _rest] = participants
+    rest_count = count - 1
+
+    assigns = %{
+      first: format_participant_name(first),
+      second: format_participant_name(second),
+      rest_count: rest_count
+    }
+
+    ~H"""
+    <div class="flex flex-col space-y-2">
+      <span class="text-purple-300 truncate flex items-center">
+        <.icon name="hero-users" class="w-4 h-4 mr-2 text-emerald-400" />
+        {@first}
+      </span>
+      <div class="flex items-center text-gray-400">
+        <.icon name="hero-users" class="w-4 h-4 mr-2 text-gray-500" />
+        <span class="text-pink-300 truncate">
+          +{@rest_count} more ({@rest_count + 1} total)
+        </span>
+      </div>
+    </div>
+    """
+  end
+
+  # Formats a participant name/identifier for display
+  defp format_participant_name(participant) do
     cond do
       String.contains?(participant, "@") ->
         # Email format - show just the local part for brevity
@@ -209,45 +262,6 @@ defmodule MessagingServiceWeb.ConversationComponent do
 
   defp format_message_time(timestamp) do
     Calendar.strftime(timestamp, "%I:%M %p")
-  end
-
-  defp message_preview(messages) when is_list(messages) and length(messages) > 0 do
-    last_message = List.last(messages)
-
-    clean_body = clean_message_body(last_message.body, last_message.type)
-
-    preview =
-      if String.length(clean_body) > 60 do
-        String.slice(clean_body, 0, 60) <> "..."
-      else
-        clean_body
-      end
-
-    "#{direction_label(last_message.direction)}: #{preview}"
-  end
-
-  defp message_preview(%NotLoaded{}), do: "Messages not loaded"
-  defp message_preview(_), do: "No messages yet"
-
-  defp conversation_status_class(messages) when is_list(messages) and length(messages) > 0 do
-    last_message = List.last(messages)
-
-    case last_message.direction do
-      "inbound" -> "bg-blue-500/20 text-blue-300 border-blue-500/30"
-      "outbound" -> "bg-green-500/20 text-green-300 border-green-500/30"
-      _ -> "bg-gray-500/20 text-gray-300 border-gray-500/30"
-    end
-  end
-
-  defp conversation_status_class(%NotLoaded{}), do: "bg-purple-500/20 text-purple-300 border-purple-500/30"
-  defp conversation_status_class(_), do: "bg-gray-500/20 text-gray-300 border-gray-500/30"
-
-  defp conversation_status_text(conversation) do
-    case conversation.message_count do
-      0 -> "New Chat"
-      count when count < 5 -> "Active"
-      _ -> "#{conversation.message_count} msgs"
-    end
   end
 
   defp message_type_class(message) do

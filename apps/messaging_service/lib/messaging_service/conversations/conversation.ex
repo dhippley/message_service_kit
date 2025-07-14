@@ -172,6 +172,7 @@ defmodule MessagingService.Conversation do
       2 ->
         [p1, p2] = all_participants
         new_changeset(%{participant_one: p1, participant_two: p2})
+
       _ ->
         new_group_changeset(all_participants)
     end
@@ -281,7 +282,8 @@ defmodule MessagingService.Conversation do
       false
 
   """
-  def participant?(%__MODULE__{conversation_type: "group", participants: participants}, contact) when is_list(participants) do
+  def participant?(%__MODULE__{conversation_type: "group", participants: participants}, contact)
+      when is_list(participants) do
     contact in participants
   end
 
@@ -332,7 +334,8 @@ defmodule MessagingService.Conversation do
       []
 
   """
-  def other_participants(%__MODULE__{conversation_type: "group", participants: participants}, contact) when is_list(participants) do
+  def other_participants(%__MODULE__{conversation_type: "group", participants: participants}, contact)
+      when is_list(participants) do
     if contact in participants do
       List.delete(participants, contact)
     else

@@ -54,9 +54,7 @@ defmodule MessagingService.Conversations do
     messages_query = from(m in Message, order_by: [asc: m.timestamp])
 
     # Get total count
-    total_count =
-      Conversation
-      |> Repo.aggregate(:count, :id)
+    total_count = Repo.aggregate(Conversation, :count, :id)
 
     # Calculate pagination info
     total_pages = ceil(total_count / per_page)
