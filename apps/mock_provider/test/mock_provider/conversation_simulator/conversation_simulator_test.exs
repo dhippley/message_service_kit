@@ -36,7 +36,7 @@ defmodule MockProvider.ConversationSimulatorTest do
 
       lotr_scenario = Enum.find(scenarios, &(&1.name == "lotr_black_gate"))
       assert String.contains?(lotr_scenario.description, "Aragorn and the Mouth of Sauron")
-      assert lotr_scenario.message_count == 8
+      assert lotr_scenario.message_count == 10
 
       ghostbusters_scenario = Enum.find(scenarios, &(&1.name == "ghostbusters_elevator"))
       assert String.contains?(ghostbusters_scenario.description, "Ghostbusters elevator scene")

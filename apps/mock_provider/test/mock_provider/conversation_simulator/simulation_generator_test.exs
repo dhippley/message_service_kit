@@ -64,7 +64,7 @@ defmodule MockProvider.SimulationGeneratorTest do
     test "has correct number of messages" do
       scenario = SimulationGenerator.generate_lotr_black_gate_scenario()
 
-      assert length(scenario.messages) == 8
+      assert length(scenario.messages) == 10
     end
 
     test "messages have correct dialogue content" do

@@ -245,7 +245,7 @@ defmodule MockProvider.ConversationSimulator do
   defp get_scenario_participants(_), do: ["Unknown"]
 
   defp get_scenario_message_count("chaos"), do: "5-10 random messages"
-  defp get_scenario_message_count("lotr_black_gate"), do: 8
+  defp get_scenario_message_count("lotr_black_gate"), do: 10
   defp get_scenario_message_count("ghostbusters_elevator"), do: 7
   defp get_scenario_message_count(_), do: "Variable"
 

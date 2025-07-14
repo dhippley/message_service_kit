@@ -94,7 +94,7 @@ defmodule MessagingService.MessageTest do
       changeset = Message.sms_changeset(%Message{}, Map.delete(invalid_attrs, :type))
 
       refute changeset.valid?
-      assert %{from: ["must be a valid phone number"]} = errors_on(changeset)
+      assert %{from: ["Invalid phone number format. Must be in E.164 format (e.g., +1234567890)"]} = errors_on(changeset)
     end
 
     test "validates phone number format for to field" do
@@ -102,7 +102,7 @@ defmodule MessagingService.MessageTest do
       changeset = Message.sms_changeset(%Message{}, Map.delete(invalid_attrs, :type))
 
       refute changeset.valid?
-      assert %{to: ["must be a valid phone number"]} = errors_on(changeset)
+      assert %{to: ["Invalid phone number format. Must be in E.164 format (e.g., +1234567890)"]} = errors_on(changeset)
     end
 
     test "validates SMS body length limit" do
@@ -136,7 +136,7 @@ defmodule MessagingService.MessageTest do
       changeset = Message.mms_changeset(%Message{}, Map.delete(invalid_attrs, :type))
 
       refute changeset.valid?
-      assert %{from: ["must be a valid phone number"]} = errors_on(changeset)
+      assert %{from: ["Invalid phone number format. Must be in E.164 format (e.g., +1234567890)"]} = errors_on(changeset)
     end
 
     test "validates MMS body length limit" do

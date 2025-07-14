@@ -1,8 +1,8 @@
 defmodule MessagingServiceWeb.PageControllerTest do
   use MessagingServiceWeb.ConnCase
 
-  test "GET /", %{conn: conn} do
+  test "GET / redirects to conversations", %{conn: conn} do
     conn = get(conn, ~p"/")
-    assert html_response(conn, 200) =~ "Peace of mind from prototype to production"
+    assert redirected_to(conn) == "/conversations"
   end
 end
