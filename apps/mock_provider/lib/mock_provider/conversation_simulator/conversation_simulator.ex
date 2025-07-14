@@ -270,8 +270,30 @@ defmodule MockProvider.ConversationSimulator do
         test_id = generate_test_id()
 
         Task.start(fn ->
-          Logger.info("Starting stress test: #{test_id} with #{params.scenario_count} scenarios")
-          execute_stress_test(test_id, params)
+          try do
+            Logger.info("Starting stress test: #{test_id} with #{params.scenario_count} scenarios")
+            execute_stress_test(test_id, params)
+          rescue
+            error ->
+              # Emit telemetry event for stress test error
+              :telemetry.execute(
+                [:mock_provider, :stress_test, :error],
+                %{
+                  test_id: test_id,
+                  error_type: error.__struct__,
+                  scenario_count: params.scenario_count,
+                  concurrent_workers: params.concurrent_workers
+                },
+                %{
+                  error_message: Exception.message(error),
+                  stacktrace: __STACKTRACE__,
+                  timestamp: DateTime.utc_now()
+                }
+              )
+
+              Logger.error("Stress test #{test_id} failed: #{Exception.message(error)}")
+              reraise error, __STACKTRACE__
+          end
         end)
 
         conn
@@ -289,6 +311,17 @@ defmodule MockProvider.ConversationSimulator do
         )
 
       {:error, reason} ->
+        # Emit telemetry event for parameter validation error
+        :telemetry.execute(
+          [:mock_provider, :stress_test, :validation_error],
+          %{},
+          %{
+            error_reason: reason,
+            params: conn.body_params || %{},
+            timestamp: DateTime.utc_now()
+          }
+        )
+
         Logger.error("Stress test failed to start: #{inspect(reason)}")
 
         conn
@@ -343,6 +376,21 @@ defmodule MockProvider.ConversationSimulator do
   defp execute_stress_test(test_id, params) do
     start_time = System.monotonic_time(:millisecond)
 
+    # Emit telemetry event for stress test start
+    :telemetry.execute(
+      [:mock_provider, :stress_test, :start],
+      %{
+        test_id: test_id,
+        scenario_count: params.scenario_count,
+        concurrent_workers: params.concurrent_workers,
+        delay_between_batches: params.delay_between_batches
+      },
+      %{
+        scenario_types: params.scenario_types,
+        timestamp: DateTime.utc_now()
+      }
+    )
+
     # Create batches of scenarios
     batch_size = div(params.scenario_count, params.concurrent_workers)
     remaining = rem(params.scenario_count, params.concurrent_workers)
@@ -371,16 +419,50 @@ defmodule MockProvider.ConversationSimulator do
     # Calculate statistics
     total_messages = Enum.sum(results)
     successful_scenarios = length(results)
+    messages_per_second = Float.round(total_messages / (duration / 1000), 2)
+
+    # Emit telemetry event for stress test completion
+    :telemetry.execute(
+      [:mock_provider, :stress_test, :stop],
+      %{
+        test_id: test_id,
+        duration_ms: duration,
+        total_messages: total_messages,
+        successful_scenarios: successful_scenarios,
+        messages_per_second: messages_per_second,
+        scenario_count: params.scenario_count,
+        concurrent_workers: params.concurrent_workers
+      },
+      %{
+        scenario_types: params.scenario_types,
+        timestamp: DateTime.utc_now(),
+        success: true
+      }
+    )
 
     Logger.info("Stress test #{test_id} completed:")
     Logger.info("  Duration: #{duration}ms")
     Logger.info("  Scenarios executed: #{successful_scenarios}")
     Logger.info("  Total messages sent: #{total_messages}")
-    Logger.info("  Messages per second: #{Float.round(total_messages / (duration / 1000), 2)}")
+    Logger.info("  Messages per second: #{messages_per_second}")
   end
 
   defp execute_worker_batch(test_id, worker_id, scenario_count, params) do
+    worker_start_time = System.monotonic_time(:millisecond)
     Logger.info("Worker #{worker_id} starting #{scenario_count} scenarios for test #{test_id}")
+
+    # Emit telemetry event for worker start
+    :telemetry.execute(
+      [:mock_provider, :stress_test, :worker, :start],
+      %{
+        test_id: test_id,
+        worker_id: worker_id,
+        scenario_count: scenario_count
+      },
+      %{
+        timestamp: DateTime.utc_now()
+      }
+    )
 
     total_messages =
       Enum.reduce(1..scenario_count, 0, fn scenario_num, acc ->
@@ -401,7 +483,26 @@ defmodule MockProvider.ConversationSimulator do
         acc + length(scenario.messages)
       end)
 
-    Logger.info("Worker #{worker_id} completed #{scenario_count} scenarios, sent #{total_messages} messages")
+    worker_end_time = System.monotonic_time(:millisecond)
+    worker_duration = worker_end_time - worker_start_time
+
+    # Emit telemetry event for worker completion
+    :telemetry.execute(
+      [:mock_provider, :stress_test, :worker, :stop],
+      %{
+        test_id: test_id,
+        worker_id: worker_id,
+        scenario_count: scenario_count,
+        total_messages: total_messages,
+        duration_ms: worker_duration
+      },
+      %{
+        timestamp: DateTime.utc_now(),
+        success: true
+      }
+    )
+
+    Logger.info("Worker #{worker_id} completed #{scenario_count} scenarios, sent #{total_messages} messages in #{worker_duration}ms")
     total_messages
   end
 end

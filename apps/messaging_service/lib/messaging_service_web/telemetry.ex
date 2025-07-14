@@ -80,7 +80,34 @@ defmodule MessagingServiceWeb.Telemetry do
       summary("vm.memory.total", unit: {:byte, :kilobyte}),
       summary("vm.total_run_queue_lengths.total"),
       summary("vm.total_run_queue_lengths.cpu"),
-      summary("vm.total_run_queue_lengths.io")
+      summary("vm.total_run_queue_lengths.io"),
+
+      # Message Delivery Metrics
+      summary("messaging_service.message_delivery.status_transition.duration_ms",
+        tags: [:message_type, :from_status, :to_status, :direction],
+        unit: :millisecond,
+        description: "Time spent in each message status before transitioning to the next"
+      ),
+      summary("messaging_service.message_delivery.completed.duration_ms",
+        tags: [:message_type, :result, :direction, :provider_name],
+        unit: :millisecond,
+        description: "Total time from processing start to completion (success or failure)"
+      ),
+      counter("messaging_service.message_delivery.status_transition.count",
+        tags: [:message_type, :from_status, :to_status, :direction],
+        description: "Count of status transitions for messages"
+      ),
+      counter("messaging_service.message_delivery.completed.count",
+        tags: [:message_type, :result, :direction, :provider_name],
+        description: "Count of completed message deliveries"
+      ),
+      counter("messaging_service.message_delivery.batch_enqueued.count",
+        description: "Count of batch message enqueue operations"
+      ),
+      summary("messaging_service.message_delivery.batch_enqueued.count",
+        unit: :count,
+        description: "Number of messages in each batch enqueue operation"
+      )
     ]
   end
 

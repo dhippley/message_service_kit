@@ -40,6 +40,7 @@ defmodule MessagingService.Workers.MessageDeliveryWorker do
   @impl Oban.Worker
   def perform(%Oban.Job{args: %{"message_id" => message_id} = args}) do
     Logger.info("Processing message delivery for message: #{message_id}")
+    start_time = System.monotonic_time(:millisecond)
 
     case Messages.get_message(message_id) do
       nil ->
@@ -47,19 +48,22 @@ defmodule MessagingService.Workers.MessageDeliveryWorker do
         {:error, :message_not_found}
 
       message ->
+        # Emit telemetry for processing start and calculate queue time
+        emit_status_transition_telemetry(message, "processing", start_time)
+
         # Update status to processing
-        Messages.update_message(message, %{status: "processing"})
+        {:ok, updated_message} = Messages.update_message(message, %{status: "processing"})
 
         # Preload attachments if the message type supports them
         message_with_attachments =
-          if message.type in ["email", "mms"] do
-            MessagingService.Repo.preload(message, :attachments)
+          if updated_message.type in ["email", "mms"] do
+            MessagingService.Repo.preload(updated_message, :attachments)
           else
-            message
+            updated_message
           end
 
         provider_configs = args["provider_configs"] || get_default_provider_configs()
-        deliver_message(message_with_attachments, provider_configs)
+        deliver_message(message_with_attachments, provider_configs, start_time)
     end
   end
 
@@ -84,6 +88,11 @@ defmodule MessagingService.Workers.MessageDeliveryWorker do
         {:error, :message_not_found}
 
       message ->
+        queue_time = System.monotonic_time(:millisecond)
+
+        # Emit telemetry for queued transition
+        emit_status_transition_telemetry(message, "queued", queue_time)
+
         Messages.update_message(message, %{
           status: "queued",
           queued_at: NaiveDateTime.utc_now()
@@ -124,14 +133,18 @@ defmodule MessagingService.Workers.MessageDeliveryWorker do
       {:ok, []}
     else
       now = NaiveDateTime.utc_now()
+      queue_time = System.monotonic_time(:millisecond)
 
-      # Update all messages to queued status
+      # Update all messages to queued status and emit telemetry
       Enum.each(message_ids, fn message_id ->
         case Messages.get_message(message_id) do
           nil ->
             :skip
 
           message ->
+            # Emit telemetry for batch queued transition
+            emit_status_transition_telemetry(message, "queued", queue_time)
+
             Messages.update_message(message, %{
               status: "queued",
               queued_at: now
@@ -145,13 +158,26 @@ defmodule MessagingService.Workers.MessageDeliveryWorker do
         end)
 
       result = Oban.insert_all(jobs)
+
+      # Emit batch telemetry
+      :telemetry.execute(
+        [:messaging_service, :message_delivery, :batch_enqueued],
+        %{
+          count: length(message_ids),
+          timestamp: queue_time
+        },
+        %{
+          message_ids: message_ids
+        }
+      )
+
       {:ok, result}
     end
   end
 
   # Private helper functions
 
-  defp deliver_message(message, provider_configs) do
+  defp deliver_message(message, provider_configs, start_time) do
     message_request = build_message_request(message)
     Logger.info("Starting message delivery for #{message.id} with configs: #{inspect(Map.keys(provider_configs))}")
 
@@ -159,26 +185,26 @@ defmodule MessagingService.Workers.MessageDeliveryWorker do
       case ProviderManager.send_message(message_request, provider_configs) do
         {:ok, provider_message_id, provider_name} ->
           Logger.info("Provider returned success: #{provider_message_id}, #{provider_name}")
-          update_message_success(message, provider_message_id, provider_name)
+          update_message_success(message, provider_message_id, provider_name, start_time)
           Logger.info("Message delivered successfully: #{message.id}")
           :ok
 
         {:error, reason} ->
           Logger.error("Provider returned error: #{inspect(reason)}")
-          update_message_failure(message, reason)
+          update_message_failure(message, reason, start_time)
           Logger.error("Failed to deliver message #{message.id}: #{reason}")
           {:error, reason}
 
         other ->
           Logger.error("Provider returned unexpected result: #{inspect(other)}")
-          update_message_failure(message, "Unexpected provider response: #{inspect(other)}")
+          update_message_failure(message, "Unexpected provider response: #{inspect(other)}", start_time)
           {:error, "Unexpected provider response"}
       end
     rescue
       e ->
         Logger.error("Exception in message delivery: #{inspect(e)}")
         Logger.error("Stacktrace: #{Exception.format_stacktrace(__STACKTRACE__)}")
-        update_message_failure(message, "Exception: #{inspect(e)}")
+        update_message_failure(message, "Exception: #{inspect(e)}", start_time)
         {:error, "Exception: #{inspect(e)}"}
     end
   end
@@ -260,8 +286,13 @@ defmodule MessagingService.Workers.MessageDeliveryWorker do
     end
   end
 
-  defp update_message_success(message, provider_message_id, provider_name) do
+  defp update_message_success(message, provider_message_id, provider_name, start_time) do
     now = NaiveDateTime.utc_now()
+    completion_time = System.monotonic_time(:millisecond)
+
+    # Emit telemetry for successful delivery
+    emit_status_transition_telemetry(message, "sent", completion_time)
+    emit_delivery_completion_telemetry(message, "success", start_time, completion_time)
 
     Messages.update_message(message, %{
       messaging_provider_id: provider_message_id,
@@ -271,8 +302,13 @@ defmodule MessagingService.Workers.MessageDeliveryWorker do
     })
   end
 
-  defp update_message_failure(message, reason) do
+  defp update_message_failure(message, reason, start_time) do
     now = NaiveDateTime.utc_now()
+    completion_time = System.monotonic_time(:millisecond)
+
+    # Emit telemetry for failed delivery
+    emit_status_transition_telemetry(message, "failed", completion_time)
+    emit_delivery_completion_telemetry(message, "failed", start_time, completion_time)
 
     Messages.update_message(message, %{
       status: "failed",
@@ -284,6 +320,86 @@ defmodule MessagingService.Workers.MessageDeliveryWorker do
   defp format_failure_reason(reason) when is_binary(reason), do: reason
   defp format_failure_reason(reason) when is_atom(reason), do: Atom.to_string(reason)
   defp format_failure_reason(reason), do: inspect(reason)
+
+  # Telemetry helper functions
+
+  defp emit_status_transition_telemetry(message, new_status, timestamp) do
+    # Calculate time since previous status
+    time_in_status = calculate_time_in_previous_status(message, timestamp)
+
+    :telemetry.execute(
+      [:messaging_service, :message_delivery, :status_transition],
+      %{
+        duration_ms: time_in_status,
+        timestamp: timestamp
+      },
+      %{
+        message_id: message.id,
+        message_type: message.type,
+        from_status: message.status,
+        to_status: new_status,
+        conversation_id: message.conversation_id,
+        direction: message.direction
+      }
+    )
+  end
+
+  defp emit_delivery_completion_telemetry(message, result, start_time, completion_time) do
+    total_duration = completion_time - start_time
+
+    :telemetry.execute(
+      [:messaging_service, :message_delivery, :completed],
+      %{
+        duration_ms: total_duration,
+        start_time: start_time,
+        completion_time: completion_time
+      },
+      %{
+        message_id: message.id,
+        message_type: message.type,
+        result: result,
+        conversation_id: message.conversation_id,
+        direction: message.direction,
+        provider_name: message.provider_name
+      }
+    )
+  end
+
+  defp calculate_time_in_previous_status(message, current_timestamp) do
+    previous_timestamp = case message.status do
+      "pending" ->
+        # Convert inserted_at to monotonic time equivalent
+        # This is approximate since we don't have the original monotonic time
+        message.inserted_at
+        |> NaiveDateTime.to_erl()
+        |> :calendar.datetime_to_gregorian_seconds()
+        |> Kernel.*(1000) # Convert to milliseconds
+
+      "queued" ->
+        if message.queued_at do
+          message.queued_at
+          |> NaiveDateTime.to_erl()
+          |> :calendar.datetime_to_gregorian_seconds()
+          |> Kernel.*(1000)
+        else
+          current_timestamp
+        end
+
+      "processing" ->
+        # For processing, we don't have an exact timestamp, so estimate
+        current_timestamp - 100 # Default 100ms ago
+
+      _ ->
+        current_timestamp
+    end
+
+    # Convert to monotonic time approximation if needed
+    if is_integer(previous_timestamp) do
+      max(0, current_timestamp - previous_timestamp)
+    else
+      0
+    end
+  end
 
   defp get_default_provider_configs do
     config = Application.get_env(:messaging_service, :provider_configs)

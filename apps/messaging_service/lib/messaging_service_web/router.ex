@@ -47,6 +47,14 @@ defmodule MessagingServiceWeb.Router do
     post "/webhooks/email", WebhookController, :receive_inbound_email
     post "/webhooks/twilio", WebhookController, :receive_twilio_webhook
     post "/webhooks/sendgrid", WebhookController, :receive_sendgrid_webhook
+
+    # Telemetry endpoints
+    get "/telemetry", TelemetryController, :api_docs
+    get "/telemetry/health", TelemetryController, :health
+    get "/telemetry/messages/overview", TelemetryController, :message_delivery_overview
+    get "/telemetry/messages/:type", TelemetryController, :message_type_metrics
+    get "/telemetry/trends", TelemetryController, :performance_trends
+    get "/telemetry/realtime", TelemetryController, :realtime_info
   end
 
   # Enable LiveDashboard and Swoosh mailbox preview in development

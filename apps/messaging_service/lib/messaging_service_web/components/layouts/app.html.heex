@@ -85,8 +85,10 @@
 <!-- Action Buttons -->
         <div class="flex items-center gap-3">
           <button
+            id="party-button"
             class="hidden sm:inline-flex items-center justify-center w-10 h-10 rounded-lg text-sm font-medium text-white bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-400 hover:to-orange-400 shadow-lg hover:shadow-yellow-500/25 transition-all duration-200 transform hover:scale-105"
             title="Let's party! 🎉"
+            onclick="startPartyStressTest()"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
@@ -180,3 +182,87 @@
     background: rgba(168, 85, 247, 0.6);
   }
 </style>
+
+<!-- Party Button JavaScript -->
+<script>
+  async function startPartyStressTest() {
+    const button = document.getElementById('party-button');
+    const originalTitle = button.title;
+    
+    // Update button state
+    button.disabled = true;
+    button.title = 'Starting party... 🚀';
+    button.classList.add('animate-pulse');
+    
+    try {
+      const response = await fetch('http://localhost:4001/simulate/stress-test', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          scenario_count: 5000,
+          concurrent_workers: 25,
+          delay_between_batches: 25,
+          scenario_types: ["chaos", "lotr_black_gate", "ghostbusters_elevator"]
+        })
+      });
+      
+      const result = await response.json();
+      
+      if (response.ok) {
+        // Success! Show party notification
+        showPartyNotification(`🎉 Party started! Test ID: ${result.test_id}`, 'success');
+        button.title = `Party in progress! 🎉 (Test: ${result.test_id})`;
+        
+        // Reset button after 10 seconds
+        setTimeout(() => {
+          button.disabled = false;
+          button.title = originalTitle;
+          button.classList.remove('animate-pulse');
+        }, 10000);
+      } else {
+        throw new Error(result.message || 'Failed to start stress test');
+      }
+    } catch (error) {
+      console.error('Party failed to start:', error);
+      showPartyNotification(`😞 Party failed: ${error.message}`, 'error');
+      
+      // Reset button immediately on error
+      button.disabled = false;
+      button.title = originalTitle;
+      button.classList.remove('animate-pulse');
+    }
+  }
+  
+  function showPartyNotification(message, type) {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg transform transition-all duration-300 ${
+      type === 'success' 
+        ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white' 
+        : 'bg-gradient-to-r from-red-500 to-pink-500 text-white'
+    }`;
+    notification.innerHTML = `
+      <div class="flex items-center gap-3">
+        <div class="flex-shrink-0">
+          ${type === 'success' ? '🎉' : '😞'}
+        </div>
+        <div class="font-medium">${message}</div>
+        <button onclick="this.parentElement.parentElement.remove()" class="ml-2 text-white/80 hover:text-white">
+          ✕
+        </button>
+      </div>
+    `;
+    
+    // Add to page
+    document.body.appendChild(notification);
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+      if (notification.parentNode) {
+        notification.remove();
+      }
+    }, 5000);
+  }
+</script>

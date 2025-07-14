@@ -10,7 +10,25 @@ defmodule MockProvider.Router do
   plug(Plug.Logger)
   plug(:match)
   plug(Plug.Parsers, parsers: [:urlencoded, :json], json_decoder: Jason)
+  plug(:cors)
   plug(:dispatch)
+
+  # CORS support
+  defp cors(conn, _opts) do
+    conn
+    |> put_resp_header("access-control-allow-origin", "*")
+    |> put_resp_header("access-control-allow-methods", "GET, POST, PUT, DELETE, OPTIONS")
+    |> put_resp_header("access-control-allow-headers", "Content-Type, Authorization")
+  end
+
+  # Handle CORS preflight requests
+  options "/simulate/stress-test" do
+    conn
+    |> put_resp_header("access-control-allow-origin", "*")
+    |> put_resp_header("access-control-allow-methods", "GET, POST, PUT, DELETE, OPTIONS")
+    |> put_resp_header("access-control-allow-headers", "Content-Type, Authorization")
+    |> send_resp(200, "")
+  end
 
   # Twilio-like SMS endpoint
   post "/v1/Accounts/:account_sid/Messages" do
@@ -67,6 +85,30 @@ defmodule MockProvider.Router do
     conn
     |> put_resp_content_type("application/json")
     |> send_resp(200, Jason.encode!(%{status: "ok", service: "mock_provider"}))
+  end
+
+  # Stress test metrics endpoints
+  get "/metrics/stress-tests" do
+    metrics = MockProvider.Telemetry.get_stress_test_metrics()
+
+    conn
+    |> put_resp_content_type("application/json")
+    |> send_resp(200, Jason.encode!(%{
+      status: "success",
+      metrics: metrics,
+      count: length(metrics)
+    }))
+  end
+
+  get "/metrics/stress-tests/summary" do
+    summary = MockProvider.Telemetry.get_metrics_summary()
+
+    conn
+    |> put_resp_content_type("application/json")
+    |> send_resp(200, Jason.encode!(%{
+      status: "success",
+      summary: summary
+    }))
   end
 
   # Catch-all

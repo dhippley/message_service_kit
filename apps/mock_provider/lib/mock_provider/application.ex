@@ -14,6 +14,9 @@ defmodule MockProvider.Application do
   def start(_type, _args) do
     port = 4001
 
+    # Attach telemetry handlers
+    MockProvider.Telemetry.attach_handlers()
+
     children = [
       {Plug.Cowboy, scheme: :http, plug: MockProvider.Router, options: [port: port]}
     ]
