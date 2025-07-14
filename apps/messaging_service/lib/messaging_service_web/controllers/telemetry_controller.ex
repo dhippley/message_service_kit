@@ -82,7 +82,8 @@ defmodule MessagingServiceWeb.TelemetryController do
   Get performance trends over time.
   """
   def performance_trends(conn, params) do
-    timeframe = Map.get(params, "timeframe", "1h") # 1h, 24h, 7d, 30d
+    # 1h, 24h, 7d, 30d
+    timeframe = Map.get(params, "timeframe", "1h")
 
     trends = %{
       timeframe: timeframe,
@@ -127,7 +128,8 @@ defmodule MessagingServiceWeb.TelemetryController do
       update_frequency_ms: 1000,
       connection_info: %{
         max_connections: 100,
-        current_connections: 0, # Would track actual connections
+        # Would track actual connections
+        current_connections: 0,
         auth_required: false
       }
     }
@@ -158,7 +160,7 @@ defmodule MessagingServiceWeb.TelemetryController do
               metrics_collection_active: true
             },
             system: %{
-              memory_usage_kb: 85473,
+              memory_usage_kb: 85_473,
               run_queue_lengths: %{total: 0, cpu: 0, io: 0},
               database_connections: %{pool_size: 10, checked_out: 2, available: 8}
             }
@@ -228,31 +230,29 @@ defmodule MessagingServiceWeb.TelemetryController do
   @doc """
   Get stress test metrics from MockProvider.
   """
+  # Get stress test data from MockProvider.Telemetry
   def stress_test_metrics(conn, _params) do
-    # Get stress test data from MockProvider.Telemetry
-    try do
-      summary = MockProvider.Telemetry.get_metrics_summary()
-      recent_tests = MockProvider.Telemetry.get_stress_test_metrics() |> Enum.take(10)
+    summary = MockProvider.Telemetry.get_metrics_summary()
+    recent_tests = Enum.take(MockProvider.Telemetry.get_stress_test_metrics(), 10)
 
-      metrics = %{
-        summary: summary,
-        recent_tests: recent_tests,
+    metrics = %{
+      summary: summary,
+      recent_tests: recent_tests,
+      timestamp: DateTime.utc_now()
+    }
+
+    json(conn, metrics)
+  rescue
+    error ->
+      Logger.error("Failed to fetch stress test metrics: #{inspect(error)}")
+
+      conn
+      |> put_status(:service_unavailable)
+      |> json(%{
+        error: "Stress test metrics unavailable",
+        details: Exception.message(error),
         timestamp: DateTime.utc_now()
-      }
-
-      json(conn, metrics)
-    rescue
-      error ->
-        Logger.error("Failed to fetch stress test metrics: #{inspect(error)}")
-
-        conn
-        |> put_status(:service_unavailable)
-        |> json(%{
-          error: "Stress test metrics unavailable",
-          details: Exception.message(error),
-          timestamp: DateTime.utc_now()
-        })
-    end
+      })
   end
 
   # Private helper functions
@@ -308,11 +308,13 @@ defmodule MessagingServiceWeb.TelemetryController do
           "twilio" => %{count: 0, success_rate: 0},
           "aws_sns" => %{count: 0, success_rate: 0}
         }
+
       "email" ->
         %{
           "sendgrid" => %{count: 0, success_rate: 0},
           "aws_ses" => %{count: 0, success_rate: 0}
         }
+
       _ ->
         %{}
     end
@@ -338,7 +340,8 @@ defmodule MessagingServiceWeb.TelemetryController do
 
   defp count_attached_handlers do
     # Count actual telemetry handlers
-    :telemetry.list_handlers([])
+    []
+    |> :telemetry.list_handlers()
     |> Enum.filter(fn %{id: id} -> is_binary(id) and String.contains?(id, "messaging") end)
     |> length()
   end
@@ -427,64 +430,61 @@ defmodule MessagingServiceWeb.TelemetryController do
   # Oban Queue Metrics Helper Functions
 
   defp get_oban_queue_metrics do
-    try do
-      # Query Oban for queue-specific metrics
-      queues_config = Application.get_env(:messaging_service, Oban, [])[:queues] || []
+    # Query Oban for queue-specific metrics
+    queues_config = Application.get_env(:messaging_service, Oban, [])[:queues] || []
 
-      Enum.reduce(queues_config, %{}, fn {queue_name, _limit}, acc ->
-        queue_stats = %{
-          name: to_string(queue_name),
-          limit: get_queue_limit(queue_name),
-          available: get_available_slots(queue_name),
-          executing: get_executing_jobs_count(queue_name),
-          retryable: get_retryable_jobs_count(queue_name),
-          scheduled: get_scheduled_jobs_count(queue_name),
-          completed_today: get_completed_jobs_today(queue_name),
-          failed_today: get_failed_jobs_today(queue_name)
-        }
-        Map.put(acc, queue_name, queue_stats)
-      end)
-    rescue
-      e ->
-        Logger.error("Failed to get Oban queue metrics: #{inspect(e)}")
-        %{}
-    end
+    Enum.reduce(queues_config, %{}, fn {queue_name, _limit}, acc ->
+      queue_stats = %{
+        name: to_string(queue_name),
+        limit: get_queue_limit(queue_name),
+        available: get_available_slots(queue_name),
+        executing: get_executing_jobs_count(queue_name),
+        retryable: get_retryable_jobs_count(queue_name),
+        scheduled: get_scheduled_jobs_count(queue_name),
+        completed_today: get_completed_jobs_today(queue_name),
+        failed_today: get_failed_jobs_today(queue_name)
+      }
+
+      Map.put(acc, queue_name, queue_stats)
+    end)
+  rescue
+    e ->
+      Logger.error("Failed to get Oban queue metrics: #{inspect(e)}")
+      %{}
   end
 
   defp get_oban_queue_summary do
-    try do
-      # Get overall queue summary metrics
+    # Get overall queue summary metrics
+    %{
+      total_queued: get_total_queued_jobs(),
+      total_executing: get_total_executing_jobs(),
+      total_scheduled: get_total_scheduled_jobs(),
+      total_retryable: get_total_retryable_jobs(),
+      total_failed_today: get_total_failed_jobs_today(),
+      total_completed_today: get_total_completed_jobs_today(),
+      queue_health: get_queue_health_status()
+    }
+  rescue
+    e ->
+      Logger.error("Failed to get Oban queue summary: #{inspect(e)}")
+
       %{
-        total_queued: get_total_queued_jobs(),
-        total_executing: get_total_executing_jobs(),
-        total_scheduled: get_total_scheduled_jobs(),
-        total_retryable: get_total_retryable_jobs(),
-        total_failed_today: get_total_failed_jobs_today(),
-        total_completed_today: get_total_completed_jobs_today(),
-        queue_health: get_queue_health_status()
+        total_queued: 0,
+        total_executing: 0,
+        total_scheduled: 0,
+        total_retryable: 0,
+        total_failed_today: 0,
+        total_completed_today: 0,
+        queue_health: "unknown"
       }
-    rescue
-      e ->
-        Logger.error("Failed to get Oban queue summary: #{inspect(e)}")
-        %{
-          total_queued: 0,
-          total_executing: 0,
-          total_scheduled: 0,
-          total_retryable: 0,
-          total_failed_today: 0,
-          total_completed_today: 0,
-          queue_health: "unknown"
-        }
-    end
   end
 
   defp get_recent_oban_jobs do
-    try do
-      # Get recent jobs from Oban - limit to last 10 for dashboard display
-      import Ecto.Query
+    # Get recent jobs from Oban - limit to last 10 for dashboard display
+    import Ecto.Query
 
-      MessagingService.Repo.all(
-        from job in "oban_jobs",
+    MessagingService.Repo.all(
+      from job in "oban_jobs",
         where: job.state in ["available", "executing", "retryable", "scheduled"],
         order_by: [desc: job.inserted_at],
         limit: 10,
@@ -500,12 +500,11 @@ defmodule MessagingServiceWeb.TelemetryController do
           attempted_at: job.attempted_at,
           args: job.args
         }
-      )
-    rescue
-      e ->
-        Logger.error("Failed to get recent Oban jobs: #{inspect(e)}")
-        []
-    end
+    )
+  rescue
+    e ->
+      Logger.error("Failed to get recent Oban jobs: #{inspect(e)}")
+      []
   end
 
   # Individual Oban query helper functions
@@ -523,110 +522,129 @@ defmodule MessagingServiceWeb.TelemetryController do
 
   defp get_executing_jobs_count(queue_name) do
     import Ecto.Query
+
     MessagingService.Repo.one(
       from job in "oban_jobs",
-      where: job.queue == ^to_string(queue_name) and job.state == "executing",
-      select: count(job.id)
+        where: job.queue == ^to_string(queue_name) and job.state == "executing",
+        select: count(job.id)
     ) || 0
   end
 
   defp get_retryable_jobs_count(queue_name) do
     import Ecto.Query
+
     MessagingService.Repo.one(
       from job in "oban_jobs",
-      where: job.queue == ^to_string(queue_name) and job.state == "retryable",
-      select: count(job.id)
+        where: job.queue == ^to_string(queue_name) and job.state == "retryable",
+        select: count(job.id)
     ) || 0
   end
 
   defp get_scheduled_jobs_count(queue_name) do
     import Ecto.Query
+
     MessagingService.Repo.one(
       from job in "oban_jobs",
-      where: job.queue == ^to_string(queue_name) and job.state == "scheduled",
-      select: count(job.id)
+        where: job.queue == ^to_string(queue_name) and job.state == "scheduled",
+        select: count(job.id)
     ) || 0
   end
 
   defp get_completed_jobs_today(queue_name) do
-    today = Date.utc_today()
     import Ecto.Query
+
+    today = Date.utc_today()
+
     MessagingService.Repo.one(
       from job in "oban_jobs",
-      where: job.queue == ^to_string(queue_name) and
-             job.state == "completed" and
-             fragment("DATE(?)", job.completed_at) == ^today,
-      select: count(job.id)
+        where:
+          job.queue == ^to_string(queue_name) and
+            job.state == "completed" and
+            fragment("DATE(?)", job.completed_at) == ^today,
+        select: count(job.id)
     ) || 0
   end
 
   defp get_failed_jobs_today(queue_name) do
-    today = Date.utc_today()
     import Ecto.Query
+
+    today = Date.utc_today()
+
     MessagingService.Repo.one(
       from job in "oban_jobs",
-      where: job.queue == ^to_string(queue_name) and
-             job.state == "discarded" and
-             fragment("DATE(?)", job.discarded_at) == ^today,
-      select: count(job.id)
+        where:
+          job.queue == ^to_string(queue_name) and
+            job.state == "discarded" and
+            fragment("DATE(?)", job.discarded_at) == ^today,
+        select: count(job.id)
     ) || 0
   end
 
   defp get_total_queued_jobs do
     import Ecto.Query
+
     MessagingService.Repo.one(
       from job in "oban_jobs",
-      where: job.state == "available",
-      select: count(job.id)
+        where: job.state == "available",
+        select: count(job.id)
     ) || 0
   end
 
   defp get_total_executing_jobs do
     import Ecto.Query
+
     MessagingService.Repo.one(
       from job in "oban_jobs",
-      where: job.state == "executing",
-      select: count(job.id)
+        where: job.state == "executing",
+        select: count(job.id)
     ) || 0
   end
 
   defp get_total_scheduled_jobs do
     import Ecto.Query
+
     MessagingService.Repo.one(
       from job in "oban_jobs",
-      where: job.state == "scheduled",
-      select: count(job.id)
+        where: job.state == "scheduled",
+        select: count(job.id)
     ) || 0
   end
 
   defp get_total_retryable_jobs do
     import Ecto.Query
+
     MessagingService.Repo.one(
       from job in "oban_jobs",
-      where: job.state == "retryable",
-      select: count(job.id)
+        where: job.state == "retryable",
+        select: count(job.id)
     ) || 0
   end
 
   defp get_total_failed_jobs_today do
-    today = Date.utc_today()
     import Ecto.Query
+
+    today = Date.utc_today()
+
     MessagingService.Repo.one(
       from job in "oban_jobs",
-      where: job.state == "discarded" and
-             fragment("DATE(?)", job.discarded_at) == ^today,
-      select: count(job.id)
+        where:
+          job.state == "discarded" and
+            fragment("DATE(?)", job.discarded_at) == ^today,
+        select: count(job.id)
     ) || 0
   end
 
   defp get_total_completed_jobs_today do
-    today = Date.utc_today()
     import Ecto.Query
+
+    today = Date.utc_today()
+
     MessagingService.Repo.one(
       from job in "oban_jobs",
-      where: job.state == "completed" and
-             fragment("DATE(?)", job.completed_at) == ^today,
-      select: count(job.id)
+        where:
+          job.state == "completed" and
+            fragment("DATE(?)", job.completed_at) == ^today,
+        select: count(job.id)
     ) || 0
   end
 

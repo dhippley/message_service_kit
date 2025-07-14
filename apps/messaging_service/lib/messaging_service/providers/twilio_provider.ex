@@ -139,10 +139,11 @@ defmodule MessagingService.Providers.TwilioProvider do
     # We need to send individual messages for each recipient
     recipients = if is_list(message.to), do: message.to, else: [message.to]
 
-    results = Enum.map(recipients, fn recipient ->
-      single_message = %{message | to: recipient}
-      send_single_twilio_message(single_message, config)
-    end)
+    results =
+      Enum.map(recipients, fn recipient ->
+        single_message = %{message | to: recipient}
+        send_single_twilio_message(single_message, config)
+      end)
 
     # Check if all messages succeeded
     case Enum.split_with(results, fn {status, _} -> status == :ok end) do

@@ -5,8 +5,8 @@ defmodule MessagingServiceWeb.ConversationLive.Show do
 
   use MessagingServiceWeb, :live_view
 
-  alias MessagingService.Conversations
   alias MessagingService.Conversation
+  alias MessagingService.Conversations
 
   @impl true
   def mount(_params, _session, socket) do

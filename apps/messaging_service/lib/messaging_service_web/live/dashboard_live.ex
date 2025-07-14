@@ -191,7 +191,7 @@ defmodule MessagingServiceWeb.DashboardLive do
 
   defp format_number(number) when is_float(number) do
     # Format float with 1 decimal place
-    :erlang.float_to_binary(number, decimals: 1) |> add_commas()
+    number |> :erlang.float_to_binary(decimals: 1) |> add_commas()
   end
 
   defp format_number(_), do: "N/A"
@@ -213,8 +213,8 @@ defmodule MessagingServiceWeb.DashboardLive do
   defp format_duration(ms) when is_number(ms) do
     cond do
       ms < 1000 -> "#{round(ms)}ms"
-      ms < 60000 -> "#{:erlang.float_to_binary(ms / 1000, decimals: 1)}s"
-      true -> "#{round(ms / 60000)}m"
+      ms < 60_000 -> "#{:erlang.float_to_binary(ms / 1000, decimals: 1)}s"
+      true -> "#{round(ms / 60_000)}m"
     end
   end
 
@@ -239,7 +239,8 @@ defmodule MessagingServiceWeb.DashboardLive do
     |> Enum.to_list()
     |> Enum.sort_by(fn {transition, _metrics} ->
       case Enum.find_index(@transition_order, &(&1 == transition)) do
-        nil -> 999  # Unknown transitions go to the end
+        # Unknown transitions go to the end
+        nil -> 999
         index -> index
       end
     end)
@@ -263,16 +264,16 @@ defmodule MessagingServiceWeb.DashboardLive do
       "queued_to_processing" -> "Queued → Processing"
       "processing_to_sent" -> "Processing → Sent"
       "processing_to_failed" -> "Processing → Failed"
-      _ -> String.replace(transition, "_", " ") |> String.replace(" to ", " → ")
+      _ -> transition |> String.replace("_", " ") |> String.replace(" to ", " → ")
     end
   end
 
   defp format_test_duration(duration_ms) when is_number(duration_ms) do
     cond do
       duration_ms < 1000 -> "#{round(duration_ms)}ms"
-      duration_ms < 60000 -> "#{:erlang.float_to_binary(duration_ms / 1000, decimals: 1)}s"
-      duration_ms < 3600000 -> "#{round(duration_ms / 60000)}m"
-      true -> "#{round(duration_ms / 3600000)}h"
+      duration_ms < 60_000 -> "#{:erlang.float_to_binary(duration_ms / 1000, decimals: 1)}s"
+      duration_ms < 3_600_000 -> "#{round(duration_ms / 60_000)}m"
+      true -> "#{round(duration_ms / 3_600_000)}h"
     end
   end
 
@@ -284,9 +285,11 @@ defmodule MessagingServiceWeb.DashboardLive do
         dt
         |> DateTime.to_naive()
         |> NaiveDateTime.to_string()
-        |> String.slice(0, 19)  # Remove microseconds
+        # Remove microseconds
+        |> String.slice(0, 19)
 
-      _ -> timestamp
+      _ ->
+        timestamp
     end
   end
 
@@ -327,15 +330,12 @@ defmodule MessagingServiceWeb.DashboardLive do
   defp job_state_color("discarded"), do: "text-red-400"
   defp job_state_color(_), do: "text-gray-400"
 
-  defp format_queue_name(queue_name) when is_atom(queue_name), do: queue_name |> Atom.to_string() |> String.capitalize()
-  defp format_queue_name(queue_name) when is_binary(queue_name), do: String.capitalize(queue_name)
-  defp format_queue_name(_), do: "Unknown"
-
   defp format_worker_name(worker) when is_binary(worker) do
     worker
     |> String.split(".")
     |> List.last()
     |> String.replace("Worker", "")
   end
+
   defp format_worker_name(_), do: "Unknown"
 end

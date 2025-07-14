@@ -16,6 +16,7 @@ defmodule MockProvider.Telemetry do
         Logger.info("[TELEMETRY] Creating ETS table :stress_test_metrics on startup")
         :ets.new(:stress_test_metrics, [:public, :named_table, :set])
         Logger.info("[TELEMETRY] ETS table created successfully")
+
       _table ->
         Logger.info("[TELEMETRY] ETS table :stress_test_metrics already exists")
     end
@@ -181,14 +182,16 @@ defmodule MockProvider.Telemetry do
       :undefined ->
         Logger.info("[TELEMETRY] ETS table not found, returning empty list")
         []
+
       _table ->
         Logger.info("[TELEMETRY] ETS table found, reading data")
         data = :ets.tab2list(:stress_test_metrics)
         Logger.info("[TELEMETRY] Raw ETS data: #{inspect(data)}")
 
-        result = data
-        |> Enum.map(fn {_id, metric} -> metric end)
-        |> Enum.sort_by(& &1.timestamp, {:desc, DateTime})
+        result =
+          data
+          |> Enum.map(fn {_id, metric} -> metric end)
+          |> Enum.sort_by(& &1.timestamp, {:desc, DateTime})
 
         Logger.info("[TELEMETRY] Processed metrics: #{inspect(result)}")
         result
@@ -199,7 +202,7 @@ defmodule MockProvider.Telemetry do
   Get metrics summary for the last N stress tests.
   """
   def get_metrics_summary(count \\ 10) do
-    metrics = get_stress_test_metrics() |> Enum.take(count)
+    metrics = Enum.take(get_stress_test_metrics(), count)
 
     if Enum.empty?(metrics) do
       %{

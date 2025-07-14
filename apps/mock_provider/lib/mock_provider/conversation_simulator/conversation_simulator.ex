@@ -200,7 +200,8 @@ defmodule MockProvider.ConversationSimulator do
     # Webhook payload format (using lowercase keys expected by the controller)
     payload = %{
       from: message.from,
-      to: message.to,  # Send the 'to' field as-is (can be string or list)
+      # Send the 'to' field as-is (can be string or list)
+      to: message.to,
       body: message.body,
       provider_id: "SM#{:rand.uniform(100_000_000_000_000_000_000_000_000_000_000)}",
       type: "sms"
@@ -340,17 +341,17 @@ defmodule MockProvider.ConversationSimulator do
     params = conn.body_params || %{}
 
     scenario_count = Map.get(params, "scenario_count", 1000)
-    concurrent_workers = Map.get(params, "concurrent_workers", 10)
+    concurrent_workers = max(Map.get(params, "concurrent_workers", 50), 50)
     delay_between_batches = Map.get(params, "delay_between_batches", 100)
     scenario_types = Map.get(params, "scenario_types", ["chaos", "lotr_black_gate", "ghostbusters_elevator"])
 
     # Validate parameters
     cond do
-      not is_integer(scenario_count) or scenario_count < 1 or scenario_count > 10_000 ->
+      not is_integer(scenario_count) or scenario_count < 1 or scenario_count > 100_000 ->
         {:error, "scenario_count must be between 1 and 10000"}
 
-      not is_integer(concurrent_workers) or concurrent_workers < 1 or concurrent_workers > 50 ->
-        {:error, "concurrent_workers must be between 1 and 50"}
+      not is_integer(concurrent_workers) or concurrent_workers < 50 ->
+        {:error, "concurrent_workers must be at least 50"}
 
       not is_integer(delay_between_batches) or delay_between_batches < 0 ->
         {:error, "delay_between_batches must be >= 0"}
@@ -502,7 +503,10 @@ defmodule MockProvider.ConversationSimulator do
       }
     )
 
-    Logger.info("Worker #{worker_id} completed #{scenario_count} scenarios, sent #{total_messages} messages in #{worker_duration}ms")
+    Logger.info(
+      "Worker #{worker_id} completed #{scenario_count} scenarios, sent #{total_messages} messages in #{worker_duration}ms"
+    )
+
     total_messages
   end
 end

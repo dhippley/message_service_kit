@@ -47,6 +47,47 @@ The application follows a clean architecture pattern with the following layers:
 │   └── router.ex          # Route definitions
 ```
 
+### MessagingService Web Layer
+
+The `messaging_service_web` provides a comprehensive web interface and API for the messaging service:
+
+#### Controllers
+- **MessageController**: REST API for creating, retrieving, and managing messages
+- **ConversationController**: API endpoints for conversation management and history
+- **WebhookController**: Handles incoming webhooks from messaging providers (delivery confirmations, status updates)
+- **TelemetryController**: Exposes real-time metrics and system health data via REST API
+- **PageController**: Serves the main web interface pages
+
+#### Live Views (Real-time UI)
+- **DashboardLive**: Real-time telemetry dashboard with auto-refreshing metrics
+  - Message delivery statistics and success rates
+  - Status transition tracking (pending → queued → processing → sent/failed)
+  - Queue metrics and worker performance
+  - Stress test results and system health monitoring
+- **ConversationLive**: Interactive conversation management interface
+
+#### Components
+- **ConversationComponent**: Reusable UI components for displaying conversation threads
+- **CoreComponents**: Base Phoenix LiveView components (buttons, forms, modals, etc.)
+- **Layouts**: Application-wide layout templates with modern gradient styling
+
+#### Key Features
+- **Real-time Telemetry**: Live monitoring of message processing with WebSocket updates
+- **Multi-provider Support**: Unified API for SMS, MMS, and email across different providers
+- **Webhook Integration**: Secure webhook endpoints with authentication for provider callbacks
+- **Modern UI**: Responsive design with Tailwind CSS and animated backgrounds
+- **Developer Tools**: Comprehensive API documentation and interactive stress testing
+
+#### API Endpoints
+```
+GET    /api/messages              # List messages
+POST   /api/messages              # Send new message
+GET    /api/conversations         # List conversations
+GET    /api/telemetry/*           # Real-time metrics
+POST   /webhooks/:provider        # Provider webhooks
+GET    /dashboard                 # Live telemetry dashboard
+```
+
 ## API Endpoints Reference
 
 ### Outbound Messaging

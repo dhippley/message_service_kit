@@ -4,6 +4,7 @@ defmodule MessagingServiceWeb.DashboardLiveTest do
   """
 
   use MessagingServiceWeb.ConnCase
+
   import Phoenix.LiveViewTest
 
   @tag :not_implemented

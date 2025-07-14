@@ -58,7 +58,7 @@ defmodule MessagingServiceWeb.ConversationComponent do
             </h3>
           </div>
         </div>
-
+        
     <!-- Conversation metadata -->
         <div class="flex items-center justify-between text-sm text-gray-400 mb-4">
           <div class="flex items-center">
@@ -71,7 +71,7 @@ defmodule MessagingServiceWeb.ConversationComponent do
             <span class="font-medium">{@conversation.message_count} messages</span>
           </div>
         </div>
-
+        
     <!-- All messages -->
         <%= if @show_messages && has_loaded_messages?(@conversation) do %>
           <div class="mt-6 pt-4 border-t border-white/10">
@@ -86,8 +86,8 @@ defmodule MessagingServiceWeb.ConversationComponent do
             </div>
           </div>
         <% end %>
-
-        <!-- View Conversation Button -->
+        
+    <!-- View Conversation Button -->
         <%= if @clickable do %>
           <div class="mt-6">
             <.link
@@ -315,8 +315,7 @@ defmodule MessagingServiceWeb.ConversationComponent do
         assigns = %{}
 
         ~H"""
-        <.icon name="hero-question-mark-circle" class="w-3 h-3 mr-1" />
-        Unknown
+        <.icon name="hero-question-mark-circle" class="w-3 h-3 mr-1" /> Unknown
         """
     end
   end

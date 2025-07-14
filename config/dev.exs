@@ -65,7 +65,7 @@ config :messaging_service, Oban,
   # Configure the environment for provider manager
   # If desired, both `http:` and `https:` keys can be
   # configured to run both http and https servers on
-  queues: [default: 10, messaging: 25, mailers: 20, events: 50, media: 10]
+  queues: [default: 10, messaging: 250, mailers: 20, events: 50, media: 10]
 
 # Set environment
 # different ports.

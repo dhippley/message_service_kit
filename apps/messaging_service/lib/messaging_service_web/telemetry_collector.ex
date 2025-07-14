@@ -4,6 +4,7 @@ defmodule MessagingServiceWeb.TelemetryCollector do
   Uses ETS tables to store metrics data for fast retrieval.
   """
   use GenServer
+
   require Logger
 
   # ETS table names
@@ -43,12 +44,7 @@ defmodule MessagingServiceWeb.TelemetryCollector do
     )
   end
 
-  def handle_telemetry_event(
-        [:messaging_service, :message_delivery, :completed],
-        measurements,
-        metadata,
-        _config
-      ) do
+  def handle_telemetry_event([:messaging_service, :message_delivery, :completed], measurements, metadata, _config) do
     timestamp = System.system_time(:millisecond)
 
     # Store completed message data
@@ -74,12 +70,7 @@ defmodule MessagingServiceWeb.TelemetryCollector do
     cleanup_old_data(timestamp)
   end
 
-  def handle_telemetry_event(
-        [:messaging_service, :message_delivery, :status_transition],
-        measurements,
-        metadata,
-        _config
-      ) do
+  def handle_telemetry_event([:messaging_service, :message_delivery, :status_transition], measurements, metadata, _config) do
     timestamp = System.system_time(:millisecond)
 
     # Store status transition data
@@ -93,12 +84,7 @@ defmodule MessagingServiceWeb.TelemetryCollector do
     })
   end
 
-  def handle_telemetry_event(
-        [:messaging_service, :message_delivery, :batch_enqueued],
-        measurements,
-        _metadata,
-        _config
-      ) do
+  def handle_telemetry_event([:messaging_service, :message_delivery, :batch_enqueued], measurements, _metadata, _config) do
     timestamp = System.system_time(:millisecond)
 
     # Store batch enqueue data
@@ -126,7 +112,9 @@ defmodule MessagingServiceWeb.TelemetryCollector do
 
   def get_average_processing_time do
     case :ets.tab2list(@message_metrics_table) do
-      [] -> 0
+      [] ->
+        0
+
       records ->
         durations = Enum.map(records, fn {_, _, _, _, _, duration} -> duration end)
         Enum.sum(durations) / length(durations)
@@ -135,11 +123,13 @@ defmodule MessagingServiceWeb.TelemetryCollector do
 
   def get_success_rate do
     case :ets.tab2list(@message_metrics_table) do
-      [] -> 0
+      [] ->
+        0
+
       records ->
         total = length(records)
         successful = Enum.count(records, fn {_, _, result, _, _, _} -> result == "success" end)
-        (successful / total) * 100
+        successful / total * 100
     end
   end
 
@@ -155,6 +145,7 @@ defmodule MessagingServiceWeb.TelemetryCollector do
           avg_processing_time_ms: 0,
           success_rate: 0
         }
+
       _ ->
         all_records = :ets.match(@message_metrics_table, {:_, message_type, :"$1", :_, :_, :"$2"})
         total = length(all_records)
@@ -163,7 +154,7 @@ defmodule MessagingServiceWeb.TelemetryCollector do
 
         durations = Enum.map(all_records, fn [_, duration] -> duration end)
         avg_duration = if total > 0, do: Enum.sum(durations) / total, else: 0
-        success_rate = if total > 0, do: (successful / total) * 100, else: 0
+        success_rate = if total > 0, do: successful / total * 100, else: 0
 
         %{
           total_count: total,
@@ -177,7 +168,7 @@ defmodule MessagingServiceWeb.TelemetryCollector do
 
   def get_transition_metrics(from_status, to_status) do
     pattern = {:_, :_, from_status, to_status, :_, :"$1"}
-    durations = :ets.match(@status_transitions_table, pattern) |> List.flatten()
+    durations = @status_transitions_table |> :ets.match(pattern) |> List.flatten()
 
     case durations do
       [] ->
@@ -187,6 +178,7 @@ defmodule MessagingServiceWeb.TelemetryCollector do
           p95_duration_ms: 0,
           p99_duration_ms: 0
         }
+
       _ ->
         count = length(durations)
         avg_duration = Enum.sum(durations) / count
@@ -209,27 +201,35 @@ defmodule MessagingServiceWeb.TelemetryCollector do
 
   def get_recent_activity_summary do
     now = System.system_time(:millisecond)
-    five_minutes_ago = now - (5 * 60 * 1000)
-    one_hour_ago = now - (60 * 60 * 1000)
+    five_minutes_ago = now - 5 * 60 * 1000
+    one_hour_ago = now - 60 * 60 * 1000
 
     # Get last 5 minutes activity
-    recent_5min = :ets.select(@recent_activity_table, [
-      {{:"$1", :completed, :_, :_, :"$2"}, [{:>, :"$1", five_minutes_ago}], [{{:"$1", :"$2"}}]}
-    ])
+    recent_5min =
+      :ets.select(@recent_activity_table, [
+        {{:"$1", :completed, :_, :_, :"$2"}, [{:>, :"$1", five_minutes_ago}], [{{:"$1", :"$2"}}]}
+      ])
 
     # Get last hour activity
-    recent_1hour = :ets.select(@recent_activity_table, [
-      {{:"$1", :completed, :_, :_, :"$2"}, [{:>, :"$1", one_hour_ago}], [{{:"$1", :"$2"}}]}
-    ])
+    recent_1hour =
+      :ets.select(@recent_activity_table, [
+        {{:"$1", :completed, :_, :_, :"$2"}, [{:>, :"$1", one_hour_ago}], [{{:"$1", :"$2"}}]}
+      ])
 
     # Get errors in each timeframe
-    errors_5min = :ets.select(@recent_activity_table, [
-      {{:"$1", :completed, :_, "failed", :_}, [{:>, :"$1", five_minutes_ago}], [:"$1"]}
-    ]) |> length()
+    errors_5min =
+      @recent_activity_table
+      |> :ets.select([
+        {{:"$1", :completed, :_, "failed", :_}, [{:>, :"$1", five_minutes_ago}], [:"$1"]}
+      ])
+      |> length()
 
-    errors_1hour = :ets.select(@recent_activity_table, [
-      {{:"$1", :completed, :_, "failed", :_}, [{:>, :"$1", one_hour_ago}], [:"$1"]}
-    ]) |> length()
+    errors_1hour =
+      @recent_activity_table
+      |> :ets.select([
+        {{:"$1", :completed, :_, "failed", :_}, [{:>, :"$1", one_hour_ago}], [:"$1"]}
+      ])
+      |> length()
 
     %{
       last_5_minutes: %{
@@ -246,6 +246,7 @@ defmodule MessagingServiceWeb.TelemetryCollector do
   end
 
   defp calculate_avg_from_tuples([]), do: 0
+
   defp calculate_avg_from_tuples(tuples) do
     durations = Enum.map(tuples, fn {_, duration} -> duration end)
     Enum.sum(durations) / length(durations)
@@ -253,7 +254,7 @@ defmodule MessagingServiceWeb.TelemetryCollector do
 
   defp cleanup_old_data(current_timestamp) do
     # Remove data older than 24 hours
-    cutoff = current_timestamp - (24 * 60 * 60 * 1000)
+    cutoff = current_timestamp - 24 * 60 * 60 * 1000
 
     # Clean message metrics
     :ets.select_delete(@message_metrics_table, [{{:"$1", :_, :_, :_, :_, :_}, [{:<, :"$1", cutoff}], [true]}])

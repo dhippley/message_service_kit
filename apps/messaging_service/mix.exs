@@ -32,7 +32,7 @@ defmodule MessagingService.MixProject do
   def application do
     [
       mod: {MessagingService.Application, []},
-      extra_applications: [:logger, :runtime_tools]
+      extra_applications: [:logger, :runtime_tools, :os_mon]
     ]
   end
 

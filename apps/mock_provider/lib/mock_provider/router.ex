@@ -93,11 +93,14 @@ defmodule MockProvider.Router do
 
     conn
     |> put_resp_content_type("application/json")
-    |> send_resp(200, Jason.encode!(%{
-      status: "success",
-      metrics: metrics,
-      count: length(metrics)
-    }))
+    |> send_resp(
+      200,
+      Jason.encode!(%{
+        status: "success",
+        metrics: metrics,
+        count: length(metrics)
+      })
+    )
   end
 
   get "/metrics/stress-tests/summary" do
@@ -105,10 +108,13 @@ defmodule MockProvider.Router do
 
     conn
     |> put_resp_content_type("application/json")
-    |> send_resp(200, Jason.encode!(%{
-      status: "success",
-      summary: summary
-    }))
+    |> send_resp(
+      200,
+      Jason.encode!(%{
+        status: "success",
+        summary: summary
+      })
+    )
   end
 
   # Catch-all

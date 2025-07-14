@@ -610,9 +610,8 @@ defmodule MessagingService.Messages do
     # Store the message in our database with pending status
     attrs_with_status =
       message_attrs
-      |> Map.put(:status, "queued")
+      |> Map.put(:status, "pending")
       |> Map.put(:direction, "outbound")
-      |> Map.put(:queued_at, NaiveDateTime.utc_now())
 
     case message_attrs[:type] || message_attrs["type"] do
       :sms -> create_sms_message(attrs_with_status)

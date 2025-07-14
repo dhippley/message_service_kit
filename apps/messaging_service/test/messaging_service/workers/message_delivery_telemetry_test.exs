@@ -6,10 +6,10 @@ defmodule MessagingService.Workers.MessageDeliveryTelemetryTest do
   use MessagingService.DataCase, async: true
   use Oban.Testing, repo: MessagingService.Repo
 
+  import ExUnit.CaptureLog
+
   alias MessagingService.Messages
   alias MessagingService.Workers.MessageDeliveryWorker
-
-  import ExUnit.CaptureLog
 
   # Helper function to receive telemetry events for a specific message ID
   defp receive_telemetry_for_message(message_id, timeout \\ 1000) do
@@ -62,6 +62,7 @@ defmodule MessagingService.Workers.MessageDeliveryTelemetryTest do
       test_pid = self()
 
       handler_id = {:test_status_transition, make_ref()}
+
       :telemetry.attach(
         handler_id,
         [:messaging_service, :message_delivery, :status_transition],
@@ -179,6 +180,7 @@ defmodule MessagingService.Workers.MessageDeliveryTelemetryTest do
       test_pid = self()
 
       handler_id = {:test_batch_enqueue, make_ref()}
+
       :telemetry.attach(
         handler_id,
         [:messaging_service, :message_delivery, :batch_enqueued],
@@ -227,6 +229,7 @@ defmodule MessagingService.Workers.MessageDeliveryTelemetryTest do
       test_pid = self()
 
       handler_id = {:test_timing_accuracy, make_ref()}
+
       :telemetry.attach(
         handler_id,
         [:messaging_service, :message_delivery, :status_transition],

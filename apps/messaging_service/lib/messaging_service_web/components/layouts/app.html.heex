@@ -16,7 +16,10 @@
       <div class="flex items-center justify-between py-4">
         <!-- Logo and Brand -->
         <div class="flex items-center gap-4">
-          <a href="/" class={"group flex items-center gap-3 #{if assigns[:current_path] == "/", do: "opacity-100", else: "opacity-90 hover:opacity-100"}"}>
+          <a
+            href="/"
+            class={"group flex items-center gap-3 #{if assigns[:current_path] == "/", do: "opacity-100", else: "opacity-90 hover:opacity-100"}"}
+          >
             <!-- Cool messaging icon -->
             <div class="relative">
               <div class="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-purple-500/25 transition-all duration-300">
@@ -213,7 +216,7 @@
         },
         body: JSON.stringify({
           scenario_count: 5000,
-          concurrent_workers: 25,
+          concurrent_workers: 100,
           delay_between_batches: 25,
           scenario_types: ["chaos", "lotr_black_gate", "ghostbusters_elevator"]
         })
@@ -245,7 +248,7 @@
       button.classList.remove('animate-pulse');
     }
   }
-  
+
   function showPartyNotification(message, type) {
     // Create notification element
     const notification = document.createElement('div');

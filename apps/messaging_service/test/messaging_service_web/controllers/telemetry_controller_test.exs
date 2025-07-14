@@ -108,7 +108,8 @@ defmodule MessagingServiceWeb.TelemetryControllerTest do
       assert json_response(conn, 200)
       response = json_response(conn, 200)
 
-      assert response["timeframe"] == "1h"  # default
+      # default
+      assert response["timeframe"] == "1h"
       assert Map.has_key?(response, "generated_at")
       assert Map.has_key?(response, "metrics")
 
