@@ -2,6 +2,8 @@
 
 A comprehensive Elixir umbrella project for messaging services, providing a unified API for sending SMS, MMS, and email messages through multiple providers.
 
+![Untitled](https://github.com/user-attachments/assets/45492015-894f-4b6c-9231-cac4e0fa0309)
+
 ## Apps
 
 - **messaging_service**: Phoenix-based main application providing messaging API
